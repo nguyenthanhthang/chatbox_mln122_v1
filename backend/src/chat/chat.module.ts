@@ -2,24 +2,22 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
-import { ChatGateway } from './gateways/chat.gateway';
-import { Chat, ChatSchema } from '../database/schemas/chat.schema';
+import { ChatSession, ChatSessionSchema } from '../database/schemas/chat-session.schema';
 import { Message, MessageSchema } from '../database/schemas/message.schema';
-import {
-  Attachment,
-  AttachmentSchema,
-} from '../database/schemas/attachment.schema';
+import { AISettings, AISettingsSchema } from '../database/schemas/ai-settings.schema';
+import { AIModule } from '../ai/ai.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: Chat.name, schema: ChatSchema },
+      { name: ChatSession.name, schema: ChatSessionSchema },
       { name: Message.name, schema: MessageSchema },
-      { name: Attachment.name, schema: AttachmentSchema },
+      { name: AISettings.name, schema: AISettingsSchema },
     ]),
+    AIModule,
   ],
   controllers: [ChatController],
-  providers: [ChatService, ChatGateway],
-  exports: [ChatService, ChatGateway],
+  providers: [ChatService],
+  exports: [ChatService],
 })
 export class ChatModule {}

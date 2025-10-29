@@ -3,59 +3,40 @@ import { Document, Types } from 'mongoose';
 
 export type MessageDocument = Message & Document;
 
-export enum MessageType {
-  TEXT = 'text',
-  IMAGE = 'image',
-  VOICE = 'voice',
-  FILE = 'file',
+export enum MessageRole {
+  USER = 'user',
+  ASSISTANT = 'assistant',
+  SYSTEM = 'system',
 }
 
 @Schema({ timestamps: true })
 export class Message {
-  @Prop({ type: Types.ObjectId, ref: 'Chat', required: true })
-  chatId: Types.ObjectId;
+  @Prop({ required: true, type: Types.ObjectId, ref: 'ChatSession' })
+  sessionId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  senderId: Types.ObjectId;
+  @Prop({ required: true, enum: MessageRole })
+  role: MessageRole;
 
   @Prop({ required: true })
   content: string;
 
-  @Prop({ default: MessageType.TEXT })
-  type: MessageType;
+  @Prop({ default: Date.now })
+  timestamp: Date;
 
-  @Prop({ type: Types.ObjectId, ref: 'Attachment' })
-  attachment?: Types.ObjectId;
-
-  @Prop({ default: false })
-  isEdited: boolean;
+  @Prop({ default: 0 })
+  tokens: number;
 
   @Prop()
-  editedAt?: Date;
+  model?: string;
 
   @Prop({ default: false })
-  isDeleted: boolean;
+  isStreaming: boolean;
 
   @Prop()
-  deletedAt?: Date;
-
-  @Prop({ type: [Types.ObjectId], ref: 'User', default: [] })
-  readBy: Types.ObjectId[];
+  parentMessageId?: Types.ObjectId;
 
   @Prop({ type: Object })
   metadata?: Record<string, any>;
-
-  // Timestamps
-  @Prop()
-  createdAt?: Date;
-
-  @Prop()
-  updatedAt?: Date;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);
-
-// Add indexes for better performance
-MessageSchema.index({ chatId: 1, createdAt: -1 });
-MessageSchema.index({ senderId: 1, createdAt: -1 });
-MessageSchema.index({ content: 'text' }); // For text search

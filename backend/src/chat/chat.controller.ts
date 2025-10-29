@@ -7,88 +7,110 @@ import {
   Delete,
   UseGuards,
   Query,
-  UseInterceptors,
-  UploadedFile,
+  Patch,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { ChatService } from './chat.service';
-import { CreateChatDto, CreateMessageDto, SearchMessagesDto } from './dto';
+import { AIService } from '../ai/ai.service';
+import { SendMessageDto, CreateSessionDto, UpdateAISettingsDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly aiService: AIService,
+  ) {}
 
-  // Chat rooms management
-  @Post('rooms')
-  async createChat(
-    @Body() createChatDto: CreateChatDto,
+  // Chat Sessions Management
+  @Post('sessions')
+  async createSession(
+    @Body() createSessionDto: CreateSessionDto,
     @CurrentUser() user: any,
   ) {
-    return this.chatService.createChat(createChatDto, user.id);
+    return this.chatService.createSession(createSessionDto, user.id);
   }
 
-  @Get('rooms')
-  async getChats(@CurrentUser() user: any) {
-    return this.chatService.getChats(user.id);
-  }
-
-  @Get('rooms/:id')
-  async getChatById(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.chatService.getChatById(id, user.id);
-  }
-
-  @Delete('rooms/:id')
-  async deleteChat(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.chatService.deleteChat(id, user.id);
-    return { message: 'Chat deleted successfully' };
-  }
-
-  // Chat history
-  @Get('rooms/:id/history')
-  async getChatHistory(
-    @Param('id') id: string,
+  @Get('sessions')
+  async getSessions(
     @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @CurrentUser() user: any,
+  ) {
+    return this.chatService.getSessions(user.id, page, limit);
+  }
+
+  @Get('sessions/:id')
+  async getSessionById(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.chatService.getSessionById(id, user.id);
+  }
+
+  @Delete('sessions/:id')
+  async deleteSession(@Param('id') id: string, @CurrentUser() user: any) {
+    await this.chatService.deleteSession(id, user.id);
+    return { message: 'Chat session deleted successfully' };
+  }
+
+  // AI Chat Functions
+  @Post('send')
+  async sendMessage(
+    @Body() sendMessageDto: SendMessageDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.chatService.sendMessage(sendMessageDto, user.id);
+  }
+
+  @Get('history/:sessionId')
+  async getSessionHistory(
+    @Param('sessionId') sessionId: string,
     @Query('limit') limit: number = 50,
     @CurrentUser() user: any,
   ) {
-    return this.chatService.getChatHistory(id, user.id, page, limit);
+    // Verify session belongs to user
+    await this.chatService.getSessionById(sessionId, user.id);
+    return this.chatService.getSessionHistory(sessionId, limit);
   }
 
-  // Messages
-  @Post('send')
-  async sendMessage(
-    @Body() createMessageDto: CreateMessageDto,
+  @Delete('history/:sessionId')
+  async clearSessionHistory(
+    @Param('sessionId') sessionId: string,
     @CurrentUser() user: any,
   ) {
-    return this.chatService.sendMessage(createMessageDto, user.id);
+    await this.chatService.clearSessionHistory(sessionId, user.id);
+    return { message: 'Session history cleared successfully' };
   }
 
-  @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(
-    @UploadedFile() file: Express.Multer.File,
+  @Post('clear')
+  async clearAllHistory(@CurrentUser() user: any) {
+    await this.chatService.clearAllUserHistory(user.id);
+    return { message: 'All chat history cleared successfully' };
+  }
+
+  @Get('export')
+  async exportHistory(
+    @Query('format') format: string = 'json',
     @CurrentUser() user: any,
   ) {
-    // TODO: Implement file upload logic
-    return { message: 'File upload endpoint - to be implemented' };
+    return this.chatService.exportUserHistory(user.id, format);
   }
 
-  // Search
-  @Post('search')
-  async searchMessages(
-    @Body() searchDto: SearchMessagesDto,
+  // AI Configuration
+  @Get('ai/models')
+  async getAvailableModels() {
+    return this.chatService['aiService'].getAvailableModels();
+  }
+
+  @Get('ai/settings')
+  async getAISettings(@CurrentUser() user: any) {
+    return this.chatService.getAISettings(user.id);
+  }
+
+  @Patch('ai/settings')
+  async updateAISettings(
+    @Body() updateAISettingsDto: UpdateAISettingsDto,
     @CurrentUser() user: any,
   ) {
-    return this.chatService.searchMessages(searchDto, user.id);
-  }
-
-  // Message status
-  @Post('rooms/:id/read')
-  async markAsRead(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.chatService.markAsRead(id, user.id);
-    return { message: 'Messages marked as read' };
+    return this.chatService.updateAISettings(user.id, updateAISettingsDto);
   }
 }
