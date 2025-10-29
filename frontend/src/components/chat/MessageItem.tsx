@@ -32,13 +32,28 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
         <div
           className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}
         >
-           <div
-             className={`px-4 py-3 rounded-2xl ${
-               isUser
-                 ? "bg-blue-600 text-white shadow-lg"
-                 : "bg-white border border-blue-200 text-gray-800 shadow-sm"
-             }`}
-           >
+          <div
+            className={`px-4 py-3 rounded-2xl ${
+              isUser
+                ? "bg-blue-600 text-white shadow-lg"
+                : "bg-white border border-blue-200 text-gray-800 shadow-sm"
+            }`}
+          >
+            {/* Images */}
+            {message.images && message.images.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {message.images.map((image: any, index: number) => (
+                  <img
+                    key={index}
+                    src={`data:${image.mimeType};base64,${image.base64}`}
+                    alt={`Image ${index + 1}`}
+                    className="max-w-xs max-h-48 object-contain rounded-lg border border-gray-200"
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Text content */}
             {isAssistant ? (
               <div className="prose prose-sm max-w-none">
                 <ReactMarkdown

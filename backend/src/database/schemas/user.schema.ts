@@ -3,18 +3,6 @@ import { Document } from 'mongoose';
 
 export type UserDocument = User & Document;
 
-export enum UserRole {
-  USER = 'user',
-  ADMIN = 'admin',
-  MODERATOR = 'moderator',
-}
-
-export enum VerificationStatus {
-  PENDING = 'pending',
-  VERIFIED = 'verified',
-  REJECTED = 'rejected',
-}
-
 @Schema({ timestamps: true })
 export class User {
   @Prop({ required: true, unique: true })
@@ -24,25 +12,10 @@ export class User {
   password: string;
 
   @Prop({ required: true })
-  username: string;
+  firstName: string;
 
-  @Prop()
-  phoneNumber?: string;
-
-  @Prop({ default: UserRole.USER })
-  role: UserRole;
-
-  @Prop({ default: VerificationStatus.PENDING })
-  emailVerification: VerificationStatus;
-
-  @Prop({ default: VerificationStatus.PENDING })
-  phoneVerification: VerificationStatus;
-
-  @Prop()
-  emailVerificationToken?: string;
-
-  @Prop()
-  phoneVerificationCode?: string;
+  @Prop({ required: true })
+  lastName: string;
 
   @Prop()
   avatar?: string;

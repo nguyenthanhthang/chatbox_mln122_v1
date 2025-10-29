@@ -1,12 +1,4 @@
-import {
-  IsEmail,
-  IsString,
-  MinLength,
-  IsOptional,
-  IsPhoneNumber,
-  IsEnum,
-} from 'class-validator';
-import { UserRole } from '../../database/schemas/user.schema';
+import { IsEmail, IsString, MinLength } from 'class-validator';
 
 export class CreateUserDto {
   @IsEmail()
@@ -17,14 +9,10 @@ export class CreateUserDto {
   password: string;
 
   @IsString()
-  @MinLength(3)
-  username: string;
+  @MinLength(2)
+  firstName: string;
 
-  @IsOptional()
-  @IsPhoneNumber('VN')
-  phoneNumber?: string;
-
-  @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
+  @IsString()
+  @MinLength(2)
+  lastName: string;
 }

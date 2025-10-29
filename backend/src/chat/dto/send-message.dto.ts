@@ -1,4 +1,26 @@
-import { IsString, IsOptional, IsEnum, IsNumber, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  Min,
+  Max,
+  IsArray,
+  ValidateNested,
+  IsBase64,
+  IsMimeType,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class ImageDto {
+  @IsString()
+  @IsBase64()
+  base64: string;
+
+  @IsString()
+  @IsMimeType()
+  mimeType: string;
+}
 
 export class SendMessageDto {
   @IsString()
@@ -27,4 +49,10 @@ export class SendMessageDto {
   @IsOptional()
   @IsString()
   systemPrompt?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ImageDto)
+  images?: ImageDto[];
 }

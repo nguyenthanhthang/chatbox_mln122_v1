@@ -148,8 +148,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   // Send message
   const sendMessage = useCallback(
-    async (content: string, model?: string) => {
-      if (!content.trim()) return;
+    async (content: string, model?: string, images?: any[]) => {
+      if (!content.trim() && (!images || images.length === 0)) return;
 
       try {
         setIsLoading(true);
@@ -160,6 +160,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           role: "user",
           content,
           timestamp: new Date(),
+          images: images,
         };
 
         setMessages((prev) => [...prev, userMessage]);
@@ -168,7 +169,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         const response = await chatService.sendMessage({
           message: content,
           sessionId: currentSession?.id,
-          model: model || currentSession?.aiModel || "gpt-4",
+          model: model || currentSession?.aiModel || "gemini-1.5-flash",
+          images: images,
         });
 
         // Add AI response

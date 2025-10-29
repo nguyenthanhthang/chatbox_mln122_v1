@@ -37,6 +37,13 @@ export class Message {
 
   @Prop({ type: Object })
   metadata?: Record<string, any>;
+
+  @Prop({ type: [Object] })
+  images?: Array<{
+    base64: string;
+    mimeType: string;
+    filename?: string;
+  }>;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);

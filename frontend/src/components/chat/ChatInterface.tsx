@@ -69,9 +69,18 @@ const ChatInterface: React.FC = () => {
   };
 
   // Send message
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (
+    content: string,
+    images?: { base64: string; mimeType: string }[]
+  ) => {
     try {
-      await sendMessage(content);
+      // Convert images to the format expected by the backend
+      const imageData = images?.map((img) => ({
+        base64: img.base64.split(",")[1], // Remove data URL prefix
+        mimeType: img.mimeType,
+      }));
+
+      await sendMessage(content, undefined, undefined, imageData);
       setIsNewChat(false);
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -113,49 +122,49 @@ const ChatInterface: React.FC = () => {
           onNewChat={handleNewChat}
         />
 
-         {/* Messages Area */}
-         <div className="flex-1 overflow-y-auto bg-gradient-to-b from-blue-50/30 to-white">
-           {messages.length === 0 ? (
-             <div className="flex items-center justify-center h-full">
-               <div className="text-center">
-                 <div className="text-6xl mb-4">🤖</div>
-                 <h1 className="text-2xl font-semibold text-blue-800 mb-2">
-                   Welcome to AI Chatbot
-                 </h1>
-                 <p className="text-blue-600 mb-6">
-                   Start a conversation with AI. Ask me anything!
-                 </p>
-                 <button
-                   onClick={handleNewChat}
-                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
-                 >
-                   Start New Chat
-                 </button>
-               </div>
-             </div>
-           ) : (
-             <div className="max-w-4xl mx-auto px-4 py-6">
-               <MessageList messages={messages} />
-               {isLoading && (
-                 <div className="flex justify-center py-4">
-                   <LoadingSpinner />
-                 </div>
-               )}
-               <div ref={messagesEndRef} />
-             </div>
-           )}
-         </div>
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-blue-50/30 to-white">
+          {messages.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="text-6xl mb-4">🤖</div>
+                <h1 className="text-2xl font-semibold text-blue-800 mb-2">
+                  Welcome to AI Chatbot
+                </h1>
+                <p className="text-blue-600 mb-6">
+                  Start a conversation with AI. Ask me anything!
+                </p>
+                <button
+                  onClick={handleNewChat}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
+                >
+                  Start New Chat
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-4xl mx-auto px-4 py-6">
+              <MessageList messages={messages} />
+              {isLoading && (
+                <div className="flex justify-center py-4">
+                  <LoadingSpinner />
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
 
-         {/* Input Area */}
-         <div className="border-t bg-gradient-to-r from-blue-50 to-white">
-           <div className="max-w-4xl mx-auto px-4 py-4">
-             <InputBox
-               onSendMessage={handleSendMessage}
-               disabled={isLoading}
-               placeholder="Type your message here..."
-             />
-           </div>
-         </div>
+        {/* Input Area */}
+        <div className="border-t bg-gradient-to-r from-blue-50 to-white">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <InputBox
+              onSendMessage={handleSendMessage}
+              disabled={isLoading}
+              placeholder="Type your message here..."
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

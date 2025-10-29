@@ -55,19 +55,19 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-80 bg-gradient-to-b from-blue-50 to-white border-r border-blue-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800">
+          <div className="flex items-center justify-between p-4 border-b border-blue-200">
+            <h2 className="text-lg font-semibold text-blue-800">
               Chat History
             </h2>
             <button
               onClick={onClose}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+              className="lg:hidden p-2 rounded-lg hover:bg-blue-100"
             >
               <svg
                 className="w-5 h-5"
@@ -89,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="p-4">
             <button
               onClick={onNewChat}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
             >
               <svg
                 className="w-5 h-5"
@@ -115,7 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <LoadingSpinner />
               </div>
             ) : sessions.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-4 text-center text-blue-600">
                 <div className="text-4xl mb-2">💬</div>
                 <p>No chat history yet</p>
                 <p className="text-sm">Start a new conversation!</p>
@@ -127,15 +127,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                     key={session.id}
                     className={`group relative flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
                       currentSession?.id === session.id
-                        ? "bg-blue-50 border border-blue-200"
-                        : "hover:bg-gray-50"
+                        ? "bg-blue-100 border border-blue-300 shadow-sm"
+                        : "hover:bg-blue-50"
                     }`}
                     onClick={() => onLoadSession(session.id)}
                   >
                     <div className="flex-shrink-0">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 bg-blue-200 rounded-full flex items-center justify-center">
                         <svg
-                          className="w-4 h-4 text-gray-600"
+                          className="w-4 h-4 text-blue-600"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -151,10 +151,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-blue-900 truncate">
                         {session.title}
                       </p>
-                      <div className="flex items-center space-x-2 text-xs text-gray-500">
+                      <div className="flex items-center space-x-2 text-xs text-blue-600">
                         <span>{formatDate(session.lastMessageAt)}</span>
                         <span>•</span>
                         <span>{session.messageCount} messages</span>
@@ -197,7 +197,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Footer */}
           {currentSession && (
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-4 border-t border-blue-200">
               <button
                 onClick={onClearSession}
                 className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"

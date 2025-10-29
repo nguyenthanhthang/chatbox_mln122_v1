@@ -6,18 +6,30 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { ChatSession, ChatSessionDocument } from '../database/schemas/chat-session.schema';
-import { Message, MessageDocument, MessageRole } from '../database/schemas/message.schema';
-import { AISettings, AISettingsDocument } from '../database/schemas/ai-settings.schema';
+import {
+  ChatSession,
+  ChatSessionDocument,
+} from '../database/schemas/chat-session.schema';
+import {
+  Message,
+  MessageDocument,
+  MessageRole,
+} from '../database/schemas/message.schema';
+import {
+  AISettings,
+  AISettingsDocument,
+} from '../database/schemas/ai-settings.schema';
 import { AIService } from '../ai/ai.service';
 import { SendMessageDto, CreateSessionDto } from './dto';
 
 @Injectable()
 export class ChatService {
   constructor(
-    @InjectModel(ChatSession.name) private chatSessionModel: Model<ChatSessionDocument>,
+    @InjectModel(ChatSession.name)
+    private chatSessionModel: Model<ChatSessionDocument>,
     @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
-    @InjectModel(AISettings.name) private aiSettingsModel: Model<AISettingsDocument>,
+    @InjectModel(AISettings.name)
+    private aiSettingsModel: Model<AISettingsDocument>,
     private aiService: AIService,
   ) {}
 
@@ -48,13 +60,19 @@ export class ChatService {
         .skip(skip)
         .limit(limit)
         .exec(),
-      this.chatSessionModel.countDocuments({ userId: new Types.ObjectId(userId), isActive: true }),
+      this.chatSessionModel.countDocuments({
+        userId: new Types.ObjectId(userId),
+        isActive: true,
+      }),
     ]);
 
     return { sessions, total };
   }
 
-  async getSessionById(sessionId: string, userId: string): Promise<ChatSession> {
+  async getSessionById(
+    sessionId: string,
+    userId: string,
+  ): Promise<ChatSession> {
     const session = await this.chatSessionModel
       .findOne({
         _id: sessionId,
@@ -113,6 +131,7 @@ export class ChatService {
       role: MessageRole.USER,
       content: sendMessageDto.message,
       timestamp: new Date(),
+      images: sendMessageDto.images,
     });
 
     await userMessage.save();
@@ -122,6 +141,7 @@ export class ChatService {
     const messages = history.map((msg) => ({
       role: msg.role,
       content: msg.content,
+      images: msg.images,
     }));
 
     // Add system prompt if provided
@@ -133,13 +153,35 @@ export class ChatService {
     }
 
     try {
-      // Generate AI response
-      const aiResponse = await this.aiService.generateResponse(
-        messages,
-        sendMessageDto.model || session.aiModel || aiSettings.defaultModel,
-        sendMessageDto.maxTokens || aiSettings.maxTokens,
-        sendMessageDto.temperature || aiSettings.temperature,
-      );
+      // Check if this is a multimodal request (has images)
+      const hasImages =
+        sendMessageDto.images && sendMessageDto.images.length > 0;
+      const model =
+        sendMessageDto.model || session.aiModel || aiSettings.defaultModel;
+
+      let aiResponse;
+      if (hasImages) {
+        // Use multimodal response for images
+        aiResponse = await this.aiService.generateMultimodalResponse(
+          messages,
+          model,
+          sendMessageDto.maxTokens || aiSettings.maxTokens,
+          sendMessageDto.temperature || aiSettings.temperature,
+        );
+      } else {
+        // Use regular text response
+        const textMessages = messages.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        }));
+
+        aiResponse = await this.aiService.generateResponse(
+          textMessages,
+          model,
+          sendMessageDto.maxTokens || aiSettings.maxTokens,
+          sendMessageDto.temperature || aiSettings.temperature,
+        );
+      }
 
       // Create AI message
       const aiMessage = new this.messageModel({
@@ -156,7 +198,7 @@ export class ChatService {
       // Update session
       await this.chatSessionModel.findByIdAndUpdate(sessionId, {
         lastMessageAt: new Date(),
-        $inc: { 
+        $inc: {
           messageCount: 2, // User + AI message
           totalTokens: aiResponse.tokens,
         },
@@ -172,7 +214,9 @@ export class ChatService {
         $push: { messages: userMessage._id },
       });
 
-      throw new BadRequestException('Failed to generate AI response: ' + error.message);
+      throw new BadRequestException(
+        'Failed to generate AI response: ' + error.message,
+      );
     }
   }
 
@@ -189,10 +233,12 @@ export class ChatService {
 
   async clearSessionHistory(sessionId: string, userId: string): Promise<void> {
     const session = await this.getSessionById(sessionId, userId);
-    
+
     // Delete all messages in session
-    await this.messageModel.deleteMany({ sessionId: new Types.ObjectId(sessionId) });
-    
+    await this.messageModel.deleteMany({
+      sessionId: new Types.ObjectId(sessionId),
+    });
+
     // Reset session stats
     await this.chatSessionModel.findByIdAndUpdate(sessionId, {
       messageCount: 0,
@@ -207,7 +253,7 @@ export class ChatService {
       .find({ userId: new Types.ObjectId(userId) })
       .select('_id');
 
-    const sessionIds = sessions.map(s => s._id);
+    const sessionIds = sessions.map((s) => s._id);
 
     // Delete all messages
     await this.messageModel.deleteMany({
@@ -241,10 +287,7 @@ export class ChatService {
     return settings;
   }
 
-  async updateAISettings(
-    userId: string,
-    updateData: any,
-  ): Promise<AISettings> {
+  async updateAISettings(userId: string, updateData: any): Promise<AISettings> {
     const settings = await this.aiSettingsModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId) },
       updateData,
@@ -259,7 +302,10 @@ export class ChatService {
   }
 
   // Export functionality
-  async exportUserHistory(userId: string, format: string = 'json'): Promise<any> {
+  async exportUserHistory(
+    userId: string,
+    format: string = 'json',
+  ): Promise<any> {
     const sessions = await this.chatSessionModel
       .find({ userId: new Types.ObjectId(userId), isActive: true })
       .populate('messages')
@@ -270,7 +316,7 @@ export class ChatService {
       return {
         exportDate: new Date(),
         totalSessions: sessions.length,
-        sessions: sessions.map(session => ({
+        sessions: sessions.map((session) => ({
           id: session._id,
           title: session.title,
           aiModel: session.aiModel,

@@ -15,17 +15,13 @@ export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const { email, username, phoneNumber } = createUserDto;
+    const { email } = createUserDto;
 
     // Check if user already exists
-    const existingUser = await this.userModel.findOne({
-      $or: [{ email }, { username }, ...(phoneNumber ? [{ phoneNumber }] : [])],
-    });
+    const existingUser = await this.userModel.findOne({ email });
 
     if (existingUser) {
-      throw new ConflictException(
-        'User with this email, username, or phone number already exists',
-      );
+      throw new ConflictException('User with this email already exists');
     }
 
     // Hash password
@@ -118,13 +114,4 @@ export class UsersService {
     return user;
   }
 
-  async findByEmailVerificationToken(token: string): Promise<User> {
-    const user = await this.userModel
-      .findOne({ emailVerificationToken: token })
-      .exec();
-    if (!user) {
-      throw new NotFoundException('Invalid verification token');
-    }
-    return user;
-  }
 }
