@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -116,7 +115,7 @@ export class ChatService {
         { title: 'New Chat', model: sendMessageDto.model },
         userId,
       );
-      sessionId = newSession._id.toString();
+      sessionId = (newSession as any)._id.toString();
     }
 
     // Verify session belongs to user
@@ -147,8 +146,9 @@ export class ChatService {
     // Add system prompt if provided
     if (sendMessageDto.systemPrompt || aiSettings.systemPrompt) {
       messages.unshift({
-        role: 'system',
+        role: MessageRole.SYSTEM,
         content: sendMessageDto.systemPrompt || aiSettings.systemPrompt,
+        images: [],
       });
     }
 
@@ -156,18 +156,19 @@ export class ChatService {
       // Check if this is a multimodal request (has images)
       const hasImages =
         sendMessageDto.images && sendMessageDto.images.length > 0;
-      const model =
-        sendMessageDto.model || session.aiModel || aiSettings.defaultModel;
 
       let aiResponse;
       if (hasImages) {
         // Use multimodal response for images
-        aiResponse = await this.aiService.generateMultimodalResponse(
-          messages,
-          model,
-          sendMessageDto.maxTokens || aiSettings.maxTokens,
-          sendMessageDto.temperature || aiSettings.temperature,
-        );
+        // Convert to MultimodalMessage format
+        const multimodalMessages = messages.map((msg) => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
+          images: msg.images,
+        }));
+
+        aiResponse =
+          await this.aiService.generateMultimodalResponse(multimodalMessages);
       } else {
         // Use regular text response
         const textMessages = messages.map((msg) => ({
@@ -175,12 +176,7 @@ export class ChatService {
           content: msg.content,
         }));
 
-        aiResponse = await this.aiService.generateResponse(
-          textMessages,
-          model,
-          sendMessageDto.maxTokens || aiSettings.maxTokens,
-          sendMessageDto.temperature || aiSettings.temperature,
-        );
+        aiResponse = await this.aiService.generateResponse(textMessages);
       }
 
       // Create AI message
@@ -232,7 +228,7 @@ export class ChatService {
   }
 
   async clearSessionHistory(sessionId: string, userId: string): Promise<void> {
-    const session = await this.getSessionById(sessionId, userId);
+    await this.getSessionById(sessionId, userId);
 
     // Delete all messages in session
     await this.messageModel.deleteMany({
@@ -320,7 +316,7 @@ export class ChatService {
           id: session._id,
           title: session.title,
           aiModel: session.aiModel,
-          createdAt: session.createdAt,
+          createdAt: (session as any).createdAt,
           messageCount: session.messageCount,
           totalTokens: session.totalTokens,
           messages: session.messages,

@@ -8,7 +8,6 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { RegisterDto, LoginDto } from './dto';
-import { User } from '../database/schemas/user.schema';
 import { getUserId } from '../common/utils/get-user-id';
 
 @Injectable()
@@ -109,7 +108,7 @@ export class AuthService {
           avatar: user.avatar,
         },
       };
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }

@@ -12,6 +12,7 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import * as fs from 'fs';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { ChatService } from './chat.service';
@@ -91,16 +92,12 @@ export class ChatController {
       },
     }),
   )
-  async uploadImage(
-    @UploadedFile() file: Express.Multer.File,
-    @CurrentUser() user: any,
-  ) {
+  uploadImage(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new Error('No file uploaded');
     }
 
     // Convert file to base64
-    const fs = require('fs');
     const imageBuffer = fs.readFileSync(file.path);
     const base64Image = imageBuffer.toString('base64');
     const mimeType = file.mimetype;
@@ -152,7 +149,7 @@ export class ChatController {
 
   // AI Configuration
   @Get('ai/models')
-  async getAvailableModels() {
+  getAvailableModels() {
     return this.chatService['aiService'].getAvailableModels();
   }
 

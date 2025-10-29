@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import {
   GoogleGenerativeAI,
   GenerativeModel,
-  Content,
   Part,
 } from '@google/generative-ai';
 
@@ -52,6 +51,15 @@ export class GoogleAIService {
           role: msg.role,
           parts: msg.parts,
         })),
+        // Apply a system instruction if provided
+        ...(systemPrompt
+          ? {
+              systemInstruction: {
+                role: 'user',
+                parts: [{ text: systemPrompt }],
+              },
+            }
+          : {}),
         generationConfig: {
           temperature: 0.7,
           topK: 40,
@@ -62,20 +70,21 @@ export class GoogleAIService {
 
       const lastMessage = messages[messages.length - 1];
       const result = await chat.sendMessage(lastMessage.parts);
-      const response = await result.response;
+      const response = result.response;
       const text = response.text();
 
       // Get usage information
-      const usage = await response.usageMetadata();
+      const usage = (response as any).usageMetadata || {};
 
       return {
         content: text,
-        tokens: usage.totalTokenCount || 0,
+        tokens: usage.totalTokenCount ?? 0,
         model: 'gemini-1.5-flash',
       };
     } catch (error) {
       this.logger.error('Error generating text response:', error);
-      throw new Error(`Google AI text generation failed: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Google AI text generation failed: ${message}`);
     }
   }
 
@@ -89,6 +98,15 @@ export class GoogleAIService {
           role: msg.role,
           parts: msg.parts,
         })),
+        // Apply a system instruction if provided
+        ...(systemPrompt
+          ? {
+              systemInstruction: {
+                role: 'user',
+                parts: [{ text: systemPrompt }],
+              },
+            }
+          : {}),
         generationConfig: {
           temperature: 0.7,
           topK: 40,
@@ -99,22 +117,21 @@ export class GoogleAIService {
 
       const lastMessage = messages[messages.length - 1];
       const result = await chat.sendMessage(lastMessage.parts);
-      const response = await result.response;
+      const response = result.response;
       const text = response.text();
 
       // Get usage information
-      const usage = await response.usageMetadata();
+      const usage = (response as any).usageMetadata || {};
 
       return {
         content: text,
-        tokens: usage.totalTokenCount || 0,
+        tokens: usage.totalTokenCount ?? 0,
         model: 'gemini-1.5-flash',
       };
     } catch (error) {
       this.logger.error('Error generating multimodal response:', error);
-      throw new Error(
-        `Google AI multimodal generation failed: ${error.message}`,
-      );
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Google AI multimodal generation failed: ${message}`);
     }
   }
 
@@ -165,7 +182,7 @@ export class GoogleAIService {
   }
 
   // Get available models
-  async getAvailableModels() {
+  getAvailableModels() {
     return [
       {
         id: 'gemini-1.5-flash',

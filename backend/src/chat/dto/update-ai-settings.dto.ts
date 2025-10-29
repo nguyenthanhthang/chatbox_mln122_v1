@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsNumber, Min, Max, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  Min,
+  Max,
+  IsBoolean,
+} from 'class-validator';
 
 export class UpdateAISettingsDto {
   @IsOptional()

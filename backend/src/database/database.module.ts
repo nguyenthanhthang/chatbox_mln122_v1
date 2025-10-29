@@ -10,7 +10,7 @@ import { AISettings, AISettingsSchema } from './schemas/ai-settings.schema';
   imports: [
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI'),
         dbName: configService.get<string>('DB_NAME'),
       }),

@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { OpenAIService } from './openai.service';
-import { ClaudeService } from './claude.service';
 import { GoogleAIService } from './google-ai.service';
-import { AIService } from './ai.service';
+import { AIService } from './ai.service.js';
 
 @Module({
   imports: [ConfigModule],
-  providers: [OpenAIService, ClaudeService, GoogleAIService, AIService],
-  exports: [AIService, OpenAIService, ClaudeService, GoogleAIService],
+  providers: [GoogleAIService, AIService],
+  exports: [AIService, GoogleAIService],
 })
 export class AIModule {}

@@ -8,7 +8,6 @@ import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RolesGuard } from './guards/roles.guard';
 
 @Module({
   imports: [
@@ -21,14 +20,14 @@ import { RolesGuard } from './guards/roles.guard';
         const expires = config.get<string>('JWT_ACCESS_EXPIRES_IN') ?? '7d';
         const signOptions: SignOptions = { expiresIn: expires as any };
         return {
-          secret: config.get<string>('JWT_ACCESS_SECRET')!,
+          secret: config.get<string>('JWT_ACCESS_SECRET'),
           signOptions,
         };
       },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard],
-  exports: [AuthService, JwtAuthGuard, RolesGuard],
+  providers: [AuthService, JwtStrategy, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard],
 })
 export class AuthModule {}
