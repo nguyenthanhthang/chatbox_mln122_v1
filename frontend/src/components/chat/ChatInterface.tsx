@@ -112,7 +112,11 @@ const ChatInterface: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen poster-bg text-slate-800">
+    <div className="relative flex h-screen app-frame text-slate-800 bg-[var(--bg)]">
+      <div
+        className="poster-bg rounded-3xl shadow-2xl absolute top-5 bottom-5 right-5 z-0"
+        style={{ left: "22rem" }}
+      />
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -127,19 +131,20 @@ const ChatInterface: React.FC = () => {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
+      <div className="flex-1 flex flex-col z-10 pl-[22rem] pr-5 pt-5 pb-5">
+        {/* Floating profile icon (headerless) */}
         <Header
           user={user}
           onMenuClick={() => setSidebarOpen(true)}
           onLogout={logout}
           onNewChat={handleNewChat}
+          variant="iconOnly"
         />
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="relative flex-1">
           {messages.length === 0 && !currentSession ? (
-            <div className="flex items-center justify-center h-full px-4">
+            <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-4 w-full max-w-3xl z-10">
               <div className="text-center max-w-xl">
                 <div className="text-6xl mb-4">🤖</div>
                 <h1 className="text-3xl font-semibold text-blue-800 mb-2">
@@ -157,21 +162,23 @@ const ChatInterface: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="max-w-4xl mx-auto px-4 py-6 parchment gold-frame">
-              <MessageList messages={messages} />
-              {isLoading && (
-                <div className="flex justify-center py-4">
-                  <LoadingSpinner />
-                </div>
-              )}
-              <div ref={messagesEndRef} />
+            <div className="px-4 py-6 min-h-[70vh] grid place-items-center">
+              <div className="w-full max-w-3xl parchment gold-frame px-4 py-6 max-h-[65vh] overflow-y-auto">
+                <MessageList messages={messages} />
+                {isLoading && (
+                  <div className="flex justify-center py-4">
+                    <LoadingSpinner />
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
             </div>
           )}
         </div>
 
-        {/* Input Area */}
-        <div className="border-t bg-gradient-to-r from-slate-50 to-white">
-          <div className="max-w-4xl mx-auto px-4 py-4">
+        {/* Input Area: centered and docked to bottom */}
+        <div className="fixed left-1/2 -translate-x-1/2 bottom-6 w-full max-w-3xl px-4 z-20">
+          <div className="p-3 bg-card border border-token rounded-2xl shadow-md">
             <InputBox
               onSendMessage={handleSendMessage}
               disabled={isLoading}

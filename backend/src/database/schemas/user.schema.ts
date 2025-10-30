@@ -20,6 +20,9 @@ export class User {
   @Prop()
   avatar?: string;
 
+  @Prop()
+  backgroundUrl?: string;
+
   @Prop({ default: true })
   isActive: boolean;
 

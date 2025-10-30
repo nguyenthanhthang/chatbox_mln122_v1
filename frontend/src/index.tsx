@@ -12,14 +12,20 @@ if (savedTheme) {
   document.documentElement.setAttribute("data-theme", savedTheme);
 }
 
-// Apply saved custom background if any
-const savedBg = localStorage.getItem("bgUrl");
-if (savedBg) {
-  document.documentElement.style.setProperty(
-    "--poster-image",
-    `url("${savedBg}")`
-  );
-}
+// Apply user-specific or locally saved custom background; otherwise use pure CSS gradients
+try {
+  const userJson = localStorage.getItem("user");
+  const user = userJson ? JSON.parse(userJson) : null;
+  const savedBg = (user && user.backgroundUrl) || localStorage.getItem("bgUrl");
+  if (savedBg) {
+    document.documentElement.style.setProperty(
+      "--poster-image",
+      `url("${savedBg}")`
+    );
+  } else {
+    document.documentElement.style.removeProperty("--poster-image");
+  }
+} catch {}
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement

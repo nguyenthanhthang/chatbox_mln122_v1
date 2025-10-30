@@ -110,19 +110,19 @@ body,
 
 /* Poster style (CSS-only) */
 .poster-bg {
-  /* support optional custom image layered on top via --poster-image */
+  /* optional custom image layered on top via --poster-image; otherwise pure CSS */
   background-image: var(--poster-image, none),
     radial-gradient(
-      1200px 800px at 20% -10%,
-      rgba(255, 255, 255, 0.05),
-      transparent 60%
+      60% 80% at 10% 10%,
+      rgba(255, 118, 118, 0.35),
+      rgba(255, 118, 118, 0) 60%
     ),
     radial-gradient(
-      1000px 700px at 120% 20%,
-      rgba(255, 255, 255, 0.04),
-      transparent 60%
+      50% 70% at 85% 70%,
+      rgba(46, 91, 160, 0.25),
+      rgba(46, 91, 160, 0) 60%
     ),
-    linear-gradient(180deg, #8d1c1c 0%, #9e1f1f 40%, #a61f1f 60%, #8a1717 100%);
+    linear-gradient(90deg, #8a1b1b 0%, #a32222 30%, #0f2236 65%, #0b1a2c 100%);
   background-size: cover, auto, auto, auto;
   background-position: center, center, center, center;
   background-repeat: no-repeat;
@@ -141,4 +141,12 @@ body,
   border-radius: 18px;
   box-shadow: 0 2px 0 #b6922e, inset 0 1px 0 rgba(255, 255, 255, 0.5),
     0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+.app-frame {
+  border-radius: 28px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 20px 60px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  margin: 12px;
 }
