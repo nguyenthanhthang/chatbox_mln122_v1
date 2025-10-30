@@ -21,7 +21,8 @@ export interface GoogleAIResponse {
 export class GoogleAIService {
   private readonly logger = new Logger(GoogleAIService.name);
   private genAI: GoogleGenerativeAI;
-  private model: GenerativeModel;
+  private textModel: GenerativeModel;
+  private visionModel: GenerativeModel;
 
   constructor(private configService: ConfigService) {
     const apiKey = this.configService.get<string>('GOOGLE_AI_API_KEY');
@@ -29,9 +30,19 @@ export class GoogleAIService {
       throw new Error('GOOGLE_AI_API_KEY is not configured');
     }
 
+    // Use broadly supported models on v1beta
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+    this.textModel = this.genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+      },
+    });
+    this.visionModel = this.genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
       generationConfig: {
         temperature: 0.7,
         topK: 40,
@@ -46,7 +57,7 @@ export class GoogleAIService {
     systemPrompt?: string,
   ): Promise<GoogleAIResponse> {
     try {
-      const chat = this.model.startChat({
+      const chat = this.textModel.startChat({
         history: messages.slice(0, -1).map((msg) => ({
           role: msg.role,
           parts: msg.parts,
@@ -79,7 +90,7 @@ export class GoogleAIService {
       return {
         content: text,
         tokens: usage.totalTokenCount ?? 0,
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash',
       };
     } catch (error) {
       this.logger.error('Error generating text response:', error);
@@ -93,7 +104,7 @@ export class GoogleAIService {
     systemPrompt?: string,
   ): Promise<GoogleAIResponse> {
     try {
-      const chat = this.model.startChat({
+      const chat = this.visionModel.startChat({
         history: messages.slice(0, -1).map((msg) => ({
           role: msg.role,
           parts: msg.parts,
@@ -126,7 +137,7 @@ export class GoogleAIService {
       return {
         content: text,
         tokens: usage.totalTokenCount ?? 0,
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash',
       };
     } catch (error) {
       this.logger.error('Error generating multimodal response:', error);
@@ -144,6 +155,24 @@ export class GoogleAIService {
       inlineData: {
         data: base64Data,
         mimeType: mimeType,
+      },
+    };
+  }
+
+  // Helper to fetch an image URL and convert to inlineData Part
+  async fetchImageUrlToPart(url: string, mimeType?: string): Promise<Part> {
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch image: ${res.status} ${res.statusText}`);
+    }
+    const arrayBuf = await res.arrayBuffer();
+    const base64 = Buffer.from(new Uint8Array(arrayBuf)).toString('base64');
+    const contentType =
+      mimeType || res.headers.get('content-type') || 'image/jpeg';
+    return {
+      inlineData: {
+        data: base64,
+        mimeType: contentType,
       },
     };
   }
@@ -185,16 +214,16 @@ export class GoogleAIService {
   getAvailableModels() {
     return [
       {
-        id: 'gemini-1.5-flash',
-        name: 'Gemini 1.5 Flash',
+        id: 'gemini-2.0-flash',
+        name: 'Gemini 2.0 Flash',
         provider: 'google',
         maxTokens: 8192,
         supportsImages: true,
         supportsText: true,
       },
       {
-        id: 'gemini-1.5-pro',
-        name: 'Gemini 1.5 Pro',
+        id: 'gemini-1.5-flash',
+        name: 'Gemini 1.5 Flash',
         provider: 'google',
         maxTokens: 8192,
         supportsImages: true,

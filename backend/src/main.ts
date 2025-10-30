@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 
@@ -21,6 +22,11 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // Increase JSON/body size limits for image/base64 payloads
+  const bodyLimit = configService.get('MAX_JSON_SIZE') || '5mb';
+  app.use(json({ limit: bodyLimit }));
+  app.use(urlencoded({ extended: true, limit: bodyLimit }));
 
   // Global prefix
   app.setGlobalPrefix(configService.get('API_PREFIX') || 'api');

@@ -74,8 +74,8 @@ class ApiService {
   async register(userData: {
     email: string;
     password: string;
-    username: string;
-    phoneNumber?: string;
+    firstName: string;
+    lastName: string;
   }) {
     return this.api.post("/auth/register", userData);
   }
@@ -101,6 +101,10 @@ class ApiService {
   }
 
   // User endpoints
+  async createUser(userData: any) {
+    return this.api.post("/users", userData);
+  }
+
   async getUsers() {
     return this.api.get("/users");
   }
@@ -122,29 +126,6 @@ class ApiService {
   }
 
   // Chat endpoints
-  async createChat(chatData: {
-    name: string;
-    participants: string[];
-    isGroup?: boolean;
-    avatar?: string;
-  }) {
-    return this.api.post("/chat/rooms", chatData);
-  }
-
-  async getChats() {
-    return this.api.get("/chat/rooms");
-  }
-
-  async getChatById(id: string) {
-    return this.api.get(`/chat/rooms/${id}`);
-  }
-
-  async getChatHistory(id: string, page: number = 1, limit: number = 50) {
-    return this.api.get(`/chat/rooms/${id}/history`, {
-      params: { page, limit },
-    });
-  }
-
   async sendMessage(messageData: {
     chatId: string;
     content: string;
@@ -154,36 +135,6 @@ class ApiService {
     attachmentSize?: number;
   }) {
     return this.api.post("/chat/send", messageData);
-  }
-
-  async uploadFile(file: File, chatId: string) {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("chatId", chatId);
-
-    return this.api.post("/chat/upload", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-  }
-
-  async searchMessages(searchData: {
-    query: string;
-    chatId?: string;
-    type?: string;
-    limit?: number;
-    offset?: number;
-  }) {
-    return this.api.post("/chat/search", searchData);
-  }
-
-  async markAsRead(chatId: string) {
-    return this.api.post(`/chat/rooms/${chatId}/read`);
-  }
-
-  async deleteChat(chatId: string) {
-    return this.api.delete(`/chat/rooms/${chatId}`);
   }
 
   // Generic methods

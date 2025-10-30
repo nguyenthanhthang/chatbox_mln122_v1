@@ -1,13 +1,5 @@
 import React from "react";
-import {
-  Box,
-  Typography,
-  Paper,
-  Avatar,
-  Grid,
-  Chip,
-  Divider,
-} from "@mui/material";
+import { Box, Typography, Paper, Avatar, Chip, Divider } from "@mui/material";
 import { useAuth } from "../../hooks/useAuth";
 import { formatDate } from "../../utils/helpers";
 
@@ -31,8 +23,14 @@ const Profile: React.FC = () => {
       </Typography>
 
       <Paper sx={{ p: 3 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={4} sx={{ textAlign: "center" }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 2fr" },
+            gap: 3,
+          }}
+        >
+          <Box sx={{ textAlign: "center" }}>
             <Avatar
               src={user.avatar}
               alt={user.username}
@@ -47,9 +45,9 @@ const Profile: React.FC = () => {
               size="small"
               sx={{ mt: 1 }}
             />
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} sm={8}>
+          <Box>
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" color="text.secondary">
                 Email
@@ -117,8 +115,8 @@ const Profile: React.FC = () => {
                 {formatDate(user.createdAt)}
               </Typography>
             </Box>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </Paper>
     </Box>
   );

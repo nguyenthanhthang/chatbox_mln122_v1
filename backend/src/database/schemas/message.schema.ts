@@ -17,7 +17,7 @@ export class Message {
   @Prop({ required: true, enum: MessageRole })
   role: MessageRole;
 
-  @Prop({ required: true })
+  @Prop({ type: String, default: '' })
   content: string;
 
   @Prop({ default: Date.now })
@@ -40,10 +40,26 @@ export class Message {
 
   @Prop({ type: [Object] })
   images?: Array<{
-    base64: string;
-    mimeType: string;
+    url?: string;
+    publicId?: string;
+    mimeType?: string;
+    width?: number;
+    height?: number;
+    size?: number;
     filename?: string;
+    base64?: string; // backward compatibility
   }>;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);
+
+// Ensure at least one of content or images exists
+MessageSchema.pre('validate', function (next) {
+  const hasText =
+    typeof this.content === 'string' && this.content.trim().length > 0;
+  const hasImages = Array.isArray(this.images) && this.images.length > 0;
+  if (!hasText && !hasImages) {
+    return next(new Error('Either content or images is required.'));
+  }
+  next();
+});

@@ -14,7 +14,9 @@ import {
 import { authService } from "../services/auth.service";
 import { setTokens, setUser, removeTokens, getUser } from "../utils/helpers";
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
 interface AuthProviderProps {
   children: ReactNode;

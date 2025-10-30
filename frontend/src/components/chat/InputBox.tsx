@@ -1,26 +1,31 @@
 import React, { useState, useRef, KeyboardEvent } from "react";
 
 interface InputBoxProps {
-  onSendMessage: (
-    message: string,
-    images?: { base64: string; mimeType: string }[]
-  ) => void;
+  onSendMessage: (message: string, images?: any[]) => void;
   disabled?: boolean;
   placeholder?: string;
+  autoFocus?: boolean;
 }
 
 const InputBox: React.FC<InputBoxProps> = ({
   onSendMessage,
   disabled = false,
   placeholder = "Type your message here...",
+  autoFocus = false,
 }) => {
   const [message, setMessage] = useState("");
-  const [images, setImages] = useState<{ base64: string; mimeType: string }[]>(
-    []
-  );
+  const [images, setImages] = useState<
+    { url?: string; base64?: string; mimeType: string }[]
+  >([]);
   const [isUploading, setIsUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (autoFocus && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [autoFocus]);
 
   const handleSubmit = async () => {
     if ((!message.trim() && images.length === 0) || disabled) return;
@@ -70,15 +75,14 @@ const InputBox: React.FC<InputBoxProps> = ({
           alert("File size must be less than 10MB");
           continue;
         }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const base64 = e.target?.result as string;
-          const mimeType = file.type;
-
-          setImages((prev) => [...prev, { base64, mimeType }]);
-        };
-        reader.readAsDataURL(file);
+        // upload to backend -> cloudinary
+        const uploaded = await (
+          await import("../../services/chat.service")
+        ).chatService.uploadImage(file);
+        setImages((prev) => [
+          ...prev,
+          { url: (uploaded as any).url, mimeType: uploaded.mimeType },
+        ]);
       }
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -103,10 +107,15 @@ const InputBox: React.FC<InputBoxProps> = ({
           {images.map((image, index) => (
             <div key={index} className="relative">
               <img
-                src={image.base64}
+                src={image.url || image.base64 || ""}
                 alt={`Upload ${index + 1}`}
                 className="w-16 h-16 object-cover rounded-lg border border-gray-200"
               />
+              {isUploading && (
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-xs rounded-lg">
+                  Uploading...
+                </div>
+              )}
               <button
                 onClick={() => removeImage(index)}
                 className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
@@ -118,7 +127,7 @@ const InputBox: React.FC<InputBoxProps> = ({
         </div>
       )}
 
-      <div className="flex items-end space-x-3 bg-white border border-blue-200 rounded-2xl p-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 shadow-lg">
+      <div className="flex items-end space-x-3 bg-card border border-token rounded-2xl p-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 shadow-lg">
         {/* Image upload button */}
         <button
           onClick={() => fileInputRef.current?.click()}
@@ -161,7 +170,9 @@ const InputBox: React.FC<InputBoxProps> = ({
             handleInput();
           }}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder}
+          placeholder={
+            placeholder || "Type your question… Shift+Enter for new line"
+          }
           disabled={disabled}
           className="flex-1 resize-none border-none outline-none text-gray-800 placeholder-gray-500 max-h-48 min-h-[24px]"
           rows={1}

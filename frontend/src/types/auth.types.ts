@@ -4,6 +4,8 @@ export interface User {
   username: string;
   role: UserRole;
   avatar?: string;
+  firstName?: string;
+  lastName?: string;
   emailVerification: VerificationStatus;
   phoneVerification: VerificationStatus;
   phoneNumber?: string;
@@ -33,8 +35,8 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string;
   password: string;
-  username: string;
-  phoneNumber?: string;
+  firstName: string;
+  lastName: string;
 }
 
 export interface AuthResponse {

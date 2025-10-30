@@ -9,6 +9,7 @@ import {
   ListItemAvatar,
   Avatar,
   Divider,
+  ListItemButton,
 } from "@mui/material";
 import { useChat } from "../../hooks/useChat";
 import { useAuth } from "../../hooks/useAuth";
@@ -16,19 +17,10 @@ import { LoadingSpinner } from "../../components/common";
 import { formatDate } from "../../utils/helpers";
 
 const Chat: React.FC = () => {
-  const { chats, isLoading, error, selectChat } = useChat();
-  const { user } = useAuth();
+  const { sessions, sessionsLoading, loadSession } = useChat();
 
-  if (isLoading) {
+  if (sessionsLoading) {
     return <LoadingSpinner message="Đang tải danh sách chat..." />;
-  }
-
-  if (error) {
-    return (
-      <Box p={3}>
-        <Typography color="error">Lỗi: {error}</Typography>
-      </Box>
-    );
   }
 
   return (
@@ -39,7 +31,7 @@ const Chat: React.FC = () => {
 
       <Paper sx={{ flex: 1, overflow: "hidden" }}>
         <List sx={{ height: "100%", overflow: "auto" }}>
-          {chats.length === 0 ? (
+          {sessions.length === 0 ? (
             <ListItem>
               <ListItemText
                 primary="Chưa có cuộc trò chuyện nào"
@@ -47,48 +39,32 @@ const Chat: React.FC = () => {
               />
             </ListItem>
           ) : (
-            chats.map((chat, index) => (
-              <React.Fragment key={chat._id}>
-                <ListItem
-                  button
-                  onClick={() => selectChat(chat._id)}
-                  sx={{
-                    "&:hover": {
-                      backgroundColor: "action.hover",
-                    },
-                  }}
-                >
-                  <ListItemAvatar>
-                    <Avatar src={chat.avatar} alt={chat.name}>
-                      {chat.name.charAt(0).toUpperCase()}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={chat.name}
-                    secondary={
-                      <Box>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          noWrap
-                          sx={{ maxWidth: 200 }}
-                        >
-                          {chat.lastMessage?.content || "Chưa có tin nhắn"}
-                        </Typography>
-                        {chat.lastMessageAt && (
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ fontSize: "0.75rem" }}
-                          >
-                            {formatDate(chat.lastMessageAt)}
-                          </Typography>
-                        )}
-                      </Box>
-                    }
-                  />
+            sessions.map((session, index) => (
+              <React.Fragment key={session.id}>
+                <ListItem disablePadding>
+                  <ListItemButton onClick={() => loadSession(session.id)}>
+                    <ListItemAvatar>
+                      <Avatar>{session.title.charAt(0).toUpperCase()}</Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={session.title}
+                      secondary={
+                        <Box>
+                          {session.lastMessageAt && (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ fontSize: "0.75rem" }}
+                            >
+                              {formatDate(session.lastMessageAt)}
+                            </Typography>
+                          )}
+                        </Box>
+                      }
+                    />
+                  </ListItemButton>
                 </ListItem>
-                {index < chats.length - 1 && <Divider />}
+                {index < sessions.length - 1 && <Divider />}
               </React.Fragment>
             ))
           )}

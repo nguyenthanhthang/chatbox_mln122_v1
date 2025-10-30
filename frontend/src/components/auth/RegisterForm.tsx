@@ -6,13 +6,14 @@ import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { registerSchema } from "../../utils/validation";
 import { Button, Input } from "../common";
+import { toastSuccess, toastError } from "../../utils/toast";
 
 interface RegisterFormData {
   email: string;
   password: string;
   confirmPassword: string;
-  username: string;
-  phoneNumber?: string;
+  firstName: string;
+  lastName: string;
 }
 
 const RegisterForm: React.FC = () => {
@@ -26,7 +27,7 @@ const RegisterForm: React.FC = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormData>({
-    resolver: yupResolver(registerSchema),
+    resolver: yupResolver(registerSchema) as any,
   });
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -34,12 +35,18 @@ const RegisterForm: React.FC = () => {
       setError("");
       setSuccess("");
 
-      const { confirmPassword, ...registerData } = data;
-      await registerUser(registerData);
+      const { confirmPassword, ...rest } = data;
+      await registerUser({
+        email: rest.email,
+        password: rest.password,
+        firstName: rest.firstName,
+        lastName: rest.lastName,
+      });
 
       setSuccess(
         "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản."
       );
+      toastSuccess("Đăng ký thành công");
 
       // Redirect to login after 3 seconds
       setTimeout(() => {
@@ -47,6 +54,7 @@ const RegisterForm: React.FC = () => {
       }, 3000);
     } catch (err: any) {
       setError(err.message);
+      toastError(err.message || "Đăng ký thất bại");
     }
   };
 
@@ -76,17 +84,29 @@ const RegisterForm: React.FC = () => {
         type="email"
         {...register("email")}
         error={!!errors.email}
-        helperText={errors.email?.message}
+        helperText={errors.email?.message || "Ví dụ: name@example.com"}
+        placeholder="name@example.com"
         autoComplete="email"
       />
 
       <Input
-        label="Tên người dùng"
+        label="Tên"
         type="text"
-        {...register("username")}
-        error={!!errors.username}
-        helperText={errors.username?.message}
-        autoComplete="username"
+        {...register("firstName")}
+        error={!!errors.firstName}
+        helperText={errors.firstName?.message || "Ít nhất 2 ký tự"}
+        placeholder="Ví dụ: An"
+        autoComplete="given-name"
+      />
+
+      <Input
+        label="Họ"
+        type="text"
+        {...register("lastName")}
+        error={!!errors.lastName}
+        helperText={errors.lastName?.message || "Ít nhất 2 ký tự"}
+        placeholder="Ví dụ: Nguyễn"
+        autoComplete="family-name"
       />
 
       <Input
@@ -95,7 +115,8 @@ const RegisterForm: React.FC = () => {
         showPasswordToggle
         {...register("password")}
         error={!!errors.password}
-        helperText={errors.password?.message}
+        helperText={errors.password?.message || "Tối thiểu 6 ký tự"}
+        placeholder="Ít nhất 6 ký tự"
         autoComplete="new-password"
       />
 
@@ -105,18 +126,14 @@ const RegisterForm: React.FC = () => {
         showPasswordToggle
         {...register("confirmPassword")}
         error={!!errors.confirmPassword}
-        helperText={errors.confirmPassword?.message}
+        helperText={
+          errors.confirmPassword?.message || "Nhập lại giống mật khẩu ở trên"
+        }
+        placeholder="Nhập lại mật khẩu"
         autoComplete="new-password"
       />
 
-      <Input
-        label="Số điện thoại (tùy chọn)"
-        type="tel"
-        {...register("phoneNumber")}
-        error={!!errors.phoneNumber}
-        helperText={errors.phoneNumber?.message}
-        autoComplete="tel"
-      />
+      {/* Số điện thoại không yêu cầu theo BE */}
 
       <Button
         type="submit"

@@ -5,6 +5,7 @@ import { User, UserSchema } from './schemas/user.schema';
 import { ChatSession, ChatSessionSchema } from './schemas/chat-session.schema';
 import { Message, MessageSchema } from './schemas/message.schema';
 import { AISettings, AISettingsSchema } from './schemas/ai-settings.schema';
+import { Visit, VisitSchema } from './schemas/visit.schema';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AISettings, AISettingsSchema } from './schemas/ai-settings.schema';
       { name: ChatSession.name, schema: ChatSessionSchema },
       { name: Message.name, schema: MessageSchema },
       { name: AISettings.name, schema: AISettingsSchema },
+      { name: Visit.name, schema: VisitSchema },
     ]),
   ],
   exports: [MongooseModule],

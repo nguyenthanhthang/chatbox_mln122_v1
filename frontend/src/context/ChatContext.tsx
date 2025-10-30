@@ -11,9 +11,10 @@ export interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
-  timestamp: Date;
+  timestamp: string;
   tokens?: number;
   model?: string;
+  images?: any[];
 }
 
 export interface ChatSession {
@@ -22,8 +23,8 @@ export interface ChatSession {
   aiModel: string;
   messageCount: number;
   totalTokens: number;
-  lastMessageAt: Date;
-  createdAt: Date;
+  lastMessageAt: string;
+  createdAt: string;
 }
 
 export interface AISettings {
@@ -46,6 +47,7 @@ interface ChatContextType {
   // Sessions
   sessions: ChatSession[];
   sessionsLoading: boolean;
+  loadSessions: () => Promise<void>;
 
   // AI Settings
   aiSettings: AISettings | null;
@@ -55,7 +57,11 @@ interface ChatContextType {
   createNewSession: (title?: string, model?: string) => Promise<void>;
   loadSession: (sessionId: string) => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
-  sendMessage: (content: string, model?: string) => Promise<void>;
+  sendMessage: (
+    content: string,
+    model?: string,
+    images?: any[]
+  ) => Promise<void>;
   clearCurrentSession: () => Promise<void>;
   clearAllHistory: () => Promise<void>;
 
@@ -65,7 +71,9 @@ interface ChatContextType {
   loadAvailableModels: () => Promise<void>;
 }
 
-const ChatContext = createContext<ChatContextType | undefined>(undefined);
+export const ChatContext = createContext<ChatContextType | undefined>(
+  undefined
+);
 
 interface ChatProviderProps {
   children: ReactNode;
@@ -95,7 +103,13 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           model: model || "gpt-4",
         });
 
-        setCurrentSession(session);
+        // Normalize id in case backend returns _id
+        const normalized: ChatSession = {
+          ...(session as any),
+          id: (session as any).id || (session as any)._id,
+        } as ChatSession;
+
+        setCurrentSession(normalized);
         setMessages([]);
         await loadSessions(); // Refresh sessions list
       } catch (error) {
@@ -117,7 +131,12 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         chatService.getSessionHistory(sessionId),
       ]);
 
-      setCurrentSession(session);
+      const normalized: ChatSession = {
+        ...(session as any),
+        id: (session as any).id || (session as any)._id,
+      } as ChatSession;
+
+      setCurrentSession(normalized);
       setMessages(history);
     } catch (error) {
       console.error("Failed to load session:", error);
@@ -134,8 +153,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         await chatService.deleteSession(sessionId);
         await loadSessions();
 
-        // If deleted session is current, create new one
+        // If deleted session is current, reset and create new one
         if (currentSession?.id === sessionId) {
+          setCurrentSession(null);
+          setMessages([]);
           await createNewSession();
         }
       } catch (error) {
@@ -154,36 +175,67 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       try {
         setIsLoading(true);
 
+        // ensure we have a session id to send into
+        let sessionIdForSend: string | undefined = currentSession?.id;
+        if (!sessionIdForSend) {
+          const created = await chatService.createSession({
+            title: "New Chat",
+          });
+          const normalized: ChatSession = {
+            ...(created as any),
+            id: (created as any).id || (created as any)._id,
+          } as ChatSession;
+          setCurrentSession(normalized);
+          sessionIdForSend = normalized.id;
+          await loadSessions();
+        }
+
         // Add user message immediately
         const userMessage: Message = {
           id: `user-${Date.now()}`,
           role: "user",
           content,
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
           images: images,
         };
 
         setMessages((prev) => [...prev, userMessage]);
 
+        // Add assistant placeholder (typing)
+        const placeholderId = `ai-pending-${Date.now()}`;
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: placeholderId,
+            role: "assistant",
+            content: "",
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+
         // Send to AI
         const response = await chatService.sendMessage({
           message: content,
-          sessionId: currentSession?.id,
+          sessionId: sessionIdForSend,
           model: model || currentSession?.aiModel || "gemini-1.5-flash",
           images: images,
         });
 
-        // Add AI response
-        const aiMessage: Message = {
-          id: `ai-${Date.now()}`,
-          role: "assistant",
-          content: response.aiMessage.content,
-          timestamp: new Date(),
-          tokens: response.aiMessage.tokens,
-          model: response.aiMessage.model,
-        };
-
-        setMessages((prev) => [...prev, aiMessage]);
+        // Replace placeholder with AI response
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === placeholderId
+              ? {
+                  id: `ai-${Date.now()}`,
+                  role: "assistant",
+                  content: response.aiMessage.content,
+                  timestamp: new Date().toISOString(),
+                  tokens: response.aiMessage.tokens,
+                  model: response.aiMessage.model,
+                }
+              : m
+          )
+        );
 
         // Update current session if it was created
         if (response.userMessage && !currentSession) {
@@ -198,8 +250,19 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         }
       } catch (error) {
         console.error("Failed to send message:", error);
-        // Remove the user message on error
-        setMessages((prev) => prev.slice(0, -1));
+        // Replace placeholder with an error message
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id.startsWith("ai-pending-")
+              ? {
+                  ...m,
+                  id: `ai-${Date.now()}`,
+                  content:
+                    "Xin lỗi, có lỗi khi tạo phản hồi. Vui lòng thử lại sau.",
+                }
+              : m
+          )
+        );
         throw error;
       } finally {
         setIsLoading(false);
@@ -239,7 +302,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     try {
       setSessionsLoading(true);
       const response = await chatService.getSessions();
-      setSessions(response.sessions);
+      const normalized = response.sessions.map((s: any) => ({
+        ...s,
+        id: s.id || s._id,
+      }));
+      setSessions(normalized);
     } catch (error) {
       console.error("Failed to load sessions:", error);
     } finally {
@@ -286,6 +353,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     isStreaming,
     sessions,
     sessionsLoading,
+    loadSessions,
     aiSettings,
     availableModels,
     createNewSession,

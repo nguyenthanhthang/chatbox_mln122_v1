@@ -6,17 +6,19 @@ import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ChatModule } from './chat/chat.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['config/development.env', '.env'],
     }),
     DatabaseModule,
     AuthModule,
     UsersModule,
     ChatModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

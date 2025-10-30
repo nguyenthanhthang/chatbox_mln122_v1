@@ -25,6 +25,7 @@ const ChatInterface: React.FC = () => {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isNewChat, setIsNewChat] = useState(false);
+  const [focusInput, setFocusInput] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load sessions on mount
@@ -42,6 +43,7 @@ const ChatInterface: React.FC = () => {
     try {
       await createNewSession();
       setIsNewChat(true);
+      setFocusInput(true);
       setSidebarOpen(false);
     } catch (error) {
       console.error("Failed to create new chat:", error);
@@ -71,16 +73,28 @@ const ChatInterface: React.FC = () => {
   // Send message
   const handleSendMessage = async (
     content: string,
-    images?: { base64: string; mimeType: string }[]
+    images?: { url?: string; base64?: string; mimeType: string }[]
   ) => {
     try {
-      // Convert images to the format expected by the backend
-      const imageData = images?.map((img) => ({
-        base64: img.base64.split(",")[1], // Remove data URL prefix
-        mimeType: img.mimeType,
-      }));
+      // Convert images to the format expected by the backend (url or base64)
+      const imageData = images
+        ?.map((img) => {
+          if (img.url) {
+            return { url: img.url, mimeType: img.mimeType };
+          }
+          if (img.base64) {
+            return {
+              base64: img.base64.includes(",")
+                ? img.base64.split(",")[1]
+                : img.base64,
+              mimeType: img.mimeType,
+            };
+          }
+          return undefined as any;
+        })
+        .filter(Boolean);
 
-      await sendMessage(content, undefined, undefined, imageData);
+      await sendMessage(content, undefined, imageData);
       setIsNewChat(false);
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -98,7 +112,7 @@ const ChatInterface: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-blue-50 to-white">
+    <div className="flex h-screen poster-bg text-slate-800">
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -123,27 +137,27 @@ const ChatInterface: React.FC = () => {
         />
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-blue-50/30 to-white">
-          {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
+        <div className="flex-1 overflow-y-auto">
+          {messages.length === 0 && !currentSession ? (
+            <div className="flex items-center justify-center h-full px-4">
+              <div className="text-center max-w-xl">
                 <div className="text-6xl mb-4">🤖</div>
-                <h1 className="text-2xl font-semibold text-blue-800 mb-2">
-                  Welcome to AI Chatbot
+                <h1 className="text-3xl font-semibold text-blue-800 mb-2">
+                  Chào mừng đến với MLN_AI
                 </h1>
-                <p className="text-blue-600 mb-6">
-                  Start a conversation with AI. Ask me anything!
+                <p className="text-blue-700 mb-6">
+                  Start a conversation with AI. Ask anything you want to learn!
                 </p>
                 <button
                   onClick={handleNewChat}
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
                 >
-                  Start New Chat
+                  Start chatting
                 </button>
               </div>
             </div>
           ) : (
-            <div className="max-w-4xl mx-auto px-4 py-6">
+            <div className="max-w-4xl mx-auto px-4 py-6 parchment gold-frame">
               <MessageList messages={messages} />
               {isLoading && (
                 <div className="flex justify-center py-4">
@@ -156,12 +170,13 @@ const ChatInterface: React.FC = () => {
         </div>
 
         {/* Input Area */}
-        <div className="border-t bg-gradient-to-r from-blue-50 to-white">
+        <div className="border-t bg-gradient-to-r from-slate-50 to-white">
           <div className="max-w-4xl mx-auto px-4 py-4">
             <InputBox
               onSendMessage={handleSendMessage}
               disabled={isLoading}
               placeholder="Type your message here..."
+              autoFocus={focusInput || Boolean(currentSession)}
             />
           </div>
         </div>

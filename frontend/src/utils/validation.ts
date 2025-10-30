@@ -18,15 +18,14 @@ export const registerSchema = yup.object({
     .string()
     .oneOf([yup.ref("password")], "Mật khẩu xác nhận không khớp")
     .required("Xác nhận mật khẩu là bắt buộc"),
-  username: yup
+  firstName: yup
     .string()
-    .min(3, "Tên người dùng phải có ít nhất 3 ký tự")
-    .max(20, "Tên người dùng không được quá 20 ký tự")
-    .required("Tên người dùng là bắt buộc"),
-  phoneNumber: yup
+    .min(2, "Tên phải có ít nhất 2 ký tự")
+    .required("Tên là bắt buộc"),
+  lastName: yup
     .string()
-    .matches(/^(\+84|84|0)[1-9][0-9]{8,9}$/, "Số điện thoại không hợp lệ")
-    .optional(),
+    .min(2, "Họ phải có ít nhất 2 ký tự")
+    .required("Họ là bắt buộc"),
 });
 
 export const verifyEmailSchema = yup.object({

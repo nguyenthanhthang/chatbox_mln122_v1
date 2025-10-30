@@ -12,18 +12,33 @@ import {
 import { Type } from 'class-transformer';
 
 export class ImageDto {
+  @IsOptional()
   @IsString()
   @IsBase64()
-  base64: string;
+  base64?: string;
 
+  @IsOptional()
+  @IsString()
+  url?: string;
+
+  @IsOptional()
   @IsString()
   @IsMimeType()
-  mimeType: string;
+  mimeType?: string;
+
+  @IsOptional()
+  @IsString()
+  filename?: string;
+
+  @IsOptional()
+  @IsNumber()
+  size?: number;
 }
 
 export class SendMessageDto {
+  @IsOptional()
   @IsString()
-  message: string;
+  message?: string;
 
   @IsOptional()
   @IsString()

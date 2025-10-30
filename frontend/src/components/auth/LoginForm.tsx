@@ -6,6 +6,7 @@ import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { loginSchema } from "../../utils/validation";
 import { Button, Input } from "../common";
+import { toastSuccess, toastError } from "../../utils/toast";
 
 interface LoginFormData {
   email: string;
@@ -29,9 +30,11 @@ const LoginForm: React.FC = () => {
     try {
       setError("");
       await login(data);
+      toastSuccess("Đăng nhập thành công");
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.message);
+      toastError(err.message || "Đăng nhập thất bại");
     }
   };
 

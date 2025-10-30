@@ -32,6 +32,12 @@ export class ChatService {
     private aiService: AIService,
   ) {}
 
+  private ensureValidObjectId(id: string, fieldName = 'id') {
+    if (!id || !Types.ObjectId.isValid(id)) {
+      throw new BadRequestException(`Invalid ${fieldName}`);
+    }
+  }
+
   // Chat Session Management
   async createSession(
     createSessionDto: CreateSessionDto,
@@ -40,7 +46,7 @@ export class ChatService {
     const session = new this.chatSessionModel({
       userId: new Types.ObjectId(userId),
       title: createSessionDto.title || 'New Chat',
-      aiModel: createSessionDto.model || 'gpt-4',
+      aiModel: createSessionDto.model || 'gemini-1.0-pro',
     });
 
     return session.save();
@@ -72,6 +78,7 @@ export class ChatService {
     sessionId: string,
     userId: string,
   ): Promise<ChatSession> {
+    this.ensureValidObjectId(sessionId, 'sessionId');
     const session = await this.chatSessionModel
       .findOne({
         _id: sessionId,
@@ -88,6 +95,7 @@ export class ChatService {
   }
 
   async deleteSession(sessionId: string, userId: string): Promise<void> {
+    this.ensureValidObjectId(sessionId, 'sessionId');
     const session = await this.chatSessionModel.findOne({
       _id: sessionId,
       userId: new Types.ObjectId(userId),
@@ -124,16 +132,40 @@ export class ChatService {
     // Get user's AI settings
     const aiSettings = await this.getOrCreateAISettings(userId);
 
-    // Create user message
+    // Create user message (support image-only)
+    const rawContent = (sendMessageDto.message ?? '').trim();
+    const hasImages =
+      Array.isArray(sendMessageDto.images) && sendMessageDto.images.length > 0;
+    const content = rawContent || (hasImages ? '[image]' : '');
+
     const userMessage = new this.messageModel({
       sessionId: new Types.ObjectId(sessionId),
       role: MessageRole.USER,
-      content: sendMessageDto.message,
+      content,
       timestamp: new Date(),
-      images: sendMessageDto.images,
+      images: hasImages ? sendMessageDto.images : [],
     });
 
     await userMessage.save();
+
+    // Auto name session from first user message if still default
+    if (
+      session.messageCount === 0 &&
+      (session.title === 'New Chat' || !session.title)
+    ) {
+      const raw = (sendMessageDto.message || '').trim();
+      const hasImgs =
+        Array.isArray(sendMessageDto.images) &&
+        sendMessageDto.images.length > 0;
+      const autoTitle = raw
+        ? raw.slice(0, 60)
+        : hasImgs
+          ? 'Image message'
+          : 'New Chat';
+      await this.chatSessionModel.findByIdAndUpdate(sessionId, {
+        title: autoTitle,
+      });
+    }
 
     // Get conversation history for context
     const history = await this.getSessionHistory(sessionId, 10); // Last 10 messages
@@ -220,6 +252,7 @@ export class ChatService {
     sessionId: string,
     limit: number = 50,
   ): Promise<Message[]> {
+    this.ensureValidObjectId(sessionId, 'sessionId');
     return this.messageModel
       .find({ sessionId: new Types.ObjectId(sessionId) })
       .sort({ timestamp: 1 })
@@ -228,6 +261,7 @@ export class ChatService {
   }
 
   async clearSessionHistory(sessionId: string, userId: string): Promise<void> {
+    this.ensureValidObjectId(sessionId, 'sessionId');
     await this.getSessionById(sessionId, userId);
 
     // Delete all messages in session
@@ -295,6 +329,17 @@ export class ChatService {
 
   async getAISettings(userId: string): Promise<AISettings> {
     return this.getOrCreateAISettings(userId);
+  }
+
+  async updateSessionTitle(
+    sessionId: string,
+    userId: string,
+    title: string,
+  ): Promise<ChatSession> {
+    this.ensureValidObjectId(sessionId, 'sessionId');
+    await this.getSessionById(sessionId, userId);
+    await this.chatSessionModel.findByIdAndUpdate(sessionId, { title });
+    return this.getSessionById(sessionId, userId);
   }
 
   // Export functionality

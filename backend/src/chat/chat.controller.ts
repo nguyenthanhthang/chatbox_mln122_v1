@@ -10,14 +10,20 @@ import {
   Patch,
   UseInterceptors,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import * as fs from 'fs';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import { ConfigService } from '@nestjs/config';
 import { ChatService } from './chat.service';
 import { AIService } from '../ai/ai.service';
-import { SendMessageDto, CreateSessionDto, UpdateAISettingsDto } from './dto';
+import {
+  SendMessageDto,
+  CreateSessionDto,
+  UpdateAISettingsDto,
+  UpdateSessionTitleDto,
+} from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -27,7 +33,34 @@ export class ChatController {
   constructor(
     private readonly chatService: ChatService,
     private readonly aiService: AIService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const url = this.configService.get<string>('CLOUDINARY_URL');
+    if (url) {
+      // Let SDK read from env variable
+      process.env.CLOUDINARY_URL = url;
+      cloudinary.config({});
+      cloudinary.config({ secure: true });
+    } else {
+      cloudinary.config({
+        cloud_name: this.configService.get<string>('CLOUDINARY_CLOUD_NAME'),
+        api_key: this.configService.get<string>('CLOUDINARY_API_KEY'),
+        api_secret: this.configService.get<string>('CLOUDINARY_API_SECRET'),
+        secure: true,
+      });
+    }
+
+    // Safe log to verify Cloudinary credentials are loaded
+    const cfg = cloudinary.config() as any;
+    const obf = (s?: string) =>
+      s ? `${s.slice(0, 3)}***${s.slice(-2)}` : 'MISSING';
+    // eslint-disable-next-line no-console
+    console.log('[Cloudinary]', {
+      name: cfg.cloud_name || 'MISSING',
+      key: cfg.api_key ? 'SET' : 'MISSING',
+      keySample: obf(cfg.api_key),
+    });
+  }
 
   // Chat Sessions Management
   @Post('sessions')
@@ -58,6 +91,15 @@ export class ChatController {
     return { message: 'Chat session deleted successfully' };
   }
 
+  @Patch('sessions/:id')
+  async renameSession(
+    @Param('id') id: string,
+    @Body() body: UpdateSessionTitleDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.chatService.updateSessionTitle(id, user.id, body.title);
+  }
+
   // AI Chat Functions
   @Post('send')
   async sendMessage(
@@ -70,47 +112,53 @@ export class ChatController {
   @Post('upload-image')
   @UseInterceptors(
     FileInterceptor('image', {
-      storage: diskStorage({
-        destination: './uploads/images',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(
-            null,
-            `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`,
-          );
-        },
-      }),
+      storage: memoryStorage(),
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
           return cb(new Error('Only image files are allowed!'), false);
         }
         cb(null, true);
       },
-      limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB limit
-      },
+      limits: { fileSize: 10 * 1024 * 1024 },
     }),
   )
-  uploadImage(@UploadedFile() file: Express.Multer.File) {
+  async uploadImage(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new Error('No file uploaded');
     }
 
-    // Convert file to base64
-    const imageBuffer = fs.readFileSync(file.path);
-    const base64Image = imageBuffer.toString('base64');
-    const mimeType = file.mimetype;
+    try {
+      const uploadResult = await new Promise<any>((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: 'chatbox/avatars',
+            transformation: [
+              { width: 256, height: 256, crop: 'fill', gravity: 'face' },
+            ],
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          },
+        );
+        stream.end(file.buffer);
+      });
 
-    // Clean up uploaded file
-    fs.unlinkSync(file.path);
-
-    return {
-      base64: base64Image,
-      mimeType: mimeType,
-      filename: file.originalname,
-      size: file.size,
-    };
+      return {
+        url: uploadResult.secure_url || uploadResult.url,
+        publicId: uploadResult.public_id,
+        width: uploadResult.width,
+        height: uploadResult.height,
+        size: uploadResult.bytes,
+        format: uploadResult.format,
+        mimeType: file.mimetype,
+        filename: file.originalname,
+      };
+    } catch (err: any) {
+      const msg = `Cloudinary upload failed: ${err?.message || String(err)}`;
+      // Surface to client as 400 so FE can read the message
+      throw new BadRequestException(msg);
+    }
   }
 
   @Get('history/:sessionId')

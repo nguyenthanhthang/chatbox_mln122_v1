@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { apiService } from "./api";
 
 export interface SendMessageRequest {
   message: string;
@@ -7,6 +7,7 @@ export interface SendMessageRequest {
   maxTokens?: number;
   temperature?: number;
   systemPrompt?: string;
+  images?: any[];
 }
 
 export interface CreateSessionRequest {
@@ -32,6 +33,7 @@ export interface Message {
   timestamp: string;
   tokens?: number;
   model?: string;
+  sessionId?: string;
 }
 
 export interface ChatSession {
@@ -65,7 +67,7 @@ export interface AIModel {
 class ChatService {
   // Session Management
   async createSession(data: CreateSessionRequest): Promise<ChatSession> {
-    const response = await api.post("/chat/sessions", data);
+    const response = await apiService.post("/chat/sessions", data);
     return response.data;
   }
 
@@ -73,26 +75,33 @@ class ChatService {
     page: number = 1,
     limit: number = 10
   ): Promise<{ sessions: ChatSession[]; total: number }> {
-    const response = await api.get(
+    const response = await apiService.get(
       `/chat/sessions?page=${page}&limit=${limit}`
     );
     return response.data;
   }
 
   async getSession(sessionId: string): Promise<ChatSession> {
-    const response = await api.get(`/chat/sessions/${sessionId}`);
+    const response = await apiService.get(`/chat/sessions/${sessionId}`);
     return response.data;
   }
 
   async deleteSession(sessionId: string): Promise<void> {
-    await api.delete(`/chat/sessions/${sessionId}`);
+    await apiService.delete(`/chat/sessions/${sessionId}`);
+  }
+
+  async renameSession(sessionId: string, title: string): Promise<ChatSession> {
+    const response = await apiService.patch(`/chat/sessions/${sessionId}`, {
+      title,
+    });
+    return response.data;
   }
 
   // Messages
   async sendMessage(
     data: SendMessageRequest
   ): Promise<{ userMessage: Message; aiMessage: Message }> {
-    const response = await api.post("/chat/send", data);
+    const response = await apiService.post("/chat/send", data);
     return response.data;
   }
 
@@ -100,38 +109,59 @@ class ChatService {
     sessionId: string,
     limit: number = 50
   ): Promise<Message[]> {
-    const response = await api.get(`/chat/history/${sessionId}?limit=${limit}`);
+    const response = await apiService.get(
+      `/chat/history/${sessionId}?limit=${limit}`
+    );
     return response.data;
   }
 
   async clearSessionHistory(sessionId: string): Promise<void> {
-    await api.delete(`/chat/history/${sessionId}`);
+    await apiService.delete(`/chat/history/${sessionId}`);
   }
 
   async clearAllHistory(): Promise<void> {
-    await api.post("/chat/clear");
+    await apiService.post("/chat/clear");
   }
 
   async exportHistory(format: string = "json"): Promise<any> {
-    const response = await api.get(`/chat/export?format=${format}`);
+    const response = await apiService.get(`/chat/export?format=${format}`);
     return response.data;
   }
 
   // AI Configuration
   async getAvailableModels(): Promise<AIModel[]> {
-    const response = await api.get("/chat/ai/models");
+    const response = await apiService.get("/chat/ai/models");
     return response.data;
   }
 
   async getAISettings(): Promise<AISettings> {
-    const response = await api.get("/chat/ai/settings");
+    const response = await apiService.get("/chat/ai/settings");
     return response.data;
   }
 
   async updateAISettings(
     settings: UpdateAISettingsRequest
   ): Promise<AISettings> {
-    const response = await api.patch("/chat/ai/settings", settings);
+    const response = await apiService.patch("/chat/ai/settings", settings);
+    return response.data;
+  }
+
+  async uploadImage(file: File): Promise<{
+    url: string;
+    publicId?: string;
+    width?: number;
+    height?: number;
+    size: number;
+    format?: string;
+    mimeType: string;
+    filename: string;
+  }> {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await apiService.post("/chat/upload-image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return response.data;
   }
 }

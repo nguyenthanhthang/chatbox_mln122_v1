@@ -14,7 +14,7 @@ export interface AIModel {
 export interface MultimodalMessage {
   role: 'user' | 'assistant';
   content: string;
-  images?: { base64: string; mimeType: string }[];
+  images?: { base64?: string; url?: string; mimeType?: string }[];
 }
 
 @Injectable()
@@ -48,8 +48,8 @@ export class AIService {
   getAvailableModels(): AIModel[] {
     return [
       {
-        id: 'gemini-1.5-flash',
-        name: 'Gemini 1.5 Flash',
+        id: 'gemini-1.0-pro',
+        name: 'Gemini 1.0 Pro',
         provider: 'google' as const,
         maxTokens: 8192,
         costPerToken: 0.00001,
@@ -57,8 +57,8 @@ export class AIService {
         supportsText: true,
       },
       {
-        id: 'gemini-1.5-pro',
-        name: 'Gemini 1.5 Pro',
+        id: 'gemini-1.0-pro-vision',
+        name: 'Gemini 1.0 Pro Vision',
         provider: 'google' as const,
         maxTokens: 8192,
         costPerToken: 0.00002,
@@ -72,7 +72,8 @@ export class AIService {
     messages: Array<{ role: string; content: string }>,
   ): Promise<{ content: string; tokens: number }> {
     const googleMessages: GoogleAIMessage[] = messages.map((msg) => ({
-      role: msg.role as 'user' | 'model',
+      // Google API expects roles: 'user' | 'model'
+      role: (msg.role === 'assistant' ? 'model' : 'user') as 'user' | 'model',
       parts: [{ text: msg.content }],
     }));
 
@@ -87,31 +88,39 @@ export class AIService {
   private async generateGoogleMultimodalResponse(
     messages: MultimodalMessage[],
   ): Promise<{ content: string; tokens: number }> {
-    const googleMessages: GoogleAIMessage[] = messages.map((msg) => {
-      const parts = [];
+    const googleMessages: GoogleAIMessage[] = [];
 
-      // Add text content
+    for (const msg of messages) {
+      const parts: any[] = [];
+
       if (msg.content) {
         parts.push({ text: msg.content });
       }
 
-      // Add images
       if (msg.images && msg.images.length > 0) {
-        msg.images.forEach((image) => {
-          parts.push(
-            this.googleAIService.convertImageToPart(
-              image.base64,
+        for (const image of msg.images) {
+          if (image.base64) {
+            parts.push(
+              this.googleAIService.convertImageToPart(
+                image.base64,
+                image.mimeType || 'image/jpeg',
+              ),
+            );
+          } else if (image.url) {
+            const part = await this.googleAIService.fetchImageUrlToPart(
+              image.url,
               image.mimeType,
-            ),
-          );
-        });
+            );
+            parts.push(part);
+          }
+        }
       }
 
-      return {
-        role: msg.role as 'user' | 'model',
+      googleMessages.push({
+        role: (msg.role === 'assistant' ? 'model' : 'user') as 'user' | 'model',
         parts,
-      };
-    });
+      });
+    }
 
     const response =
       await this.googleAIService.generateMultimodalResponse(googleMessages);

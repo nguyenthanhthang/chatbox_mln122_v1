@@ -10,6 +10,8 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
 
+  const roleLabel = isUser ? "Learner" : isAssistant ? "Assistant" : "System";
+
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
@@ -36,20 +38,33 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
             className={`px-4 py-3 rounded-2xl ${
               isUser
                 ? "bg-blue-600 text-white shadow-lg"
-                : "bg-white border border-blue-200 text-gray-800 shadow-sm"
+                : "bg-card border border-token text-gray-800 shadow-sm"
             }`}
           >
+            <div className="flex items-center justify-between mb-2">
+              <span className="chip capitalize">{roleLabel}</span>
+              <span className="text-xs text-gray-400">
+                {new Date(message.timestamp).toLocaleTimeString()}
+              </span>
+            </div>
             {/* Images */}
             {message.images && message.images.length > 0 && (
               <div className="mb-3 flex flex-wrap gap-2">
-                {message.images.map((image: any, index: number) => (
-                  <img
-                    key={index}
-                    src={`data:${image.mimeType};base64,${image.base64}`}
-                    alt={`Image ${index + 1}`}
-                    className="max-w-xs max-h-48 object-contain rounded-lg border border-gray-200"
-                  />
-                ))}
+                {message.images.map((image: any, index: number) => {
+                  const src = image.url
+                    ? image.url
+                    : image.base64
+                    ? `data:${image.mimeType};base64,${image.base64}`
+                    : "";
+                  return (
+                    <img
+                      key={index}
+                      src={src}
+                      alt={`Image ${index + 1}`}
+                      className="max-w-xs max-h-48 object-contain rounded-lg border border-gray-200"
+                    />
+                  );
+                })}
               </div>
             )}
 
@@ -58,14 +73,25 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
               <div className="prose prose-sm max-w-none">
                 <ReactMarkdown
                   components={{
-                    code: ({ node, inline, className, children, ...props }) => {
+                    code: (props: any) => {
+                      const { className, children, inline } = props || {};
                       const match = /language-(\w+)/.exec(className || "");
                       return !inline && match ? (
-                        <pre className="bg-gray-100 p-3 rounded-lg overflow-x-auto">
-                          <code className={className} {...props}>
-                            {children}
-                          </code>
-                        </pre>
+                        <div className="relative group">
+                          <button
+                            onClick={() =>
+                              navigator.clipboard.writeText(String(children))
+                            }
+                            className="hidden group-hover:block absolute right-2 top-2 px-2 py-1 text-xs rounded bg-gray-200"
+                          >
+                            Copy
+                          </button>
+                          <pre className="bg-gray-100 p-3 rounded-lg overflow-x-auto">
+                            <code className={className} {...props}>
+                              {children}
+                            </code>
+                          </pre>
+                        </div>
                       ) : (
                         <code
                           className="bg-gray-100 px-1 py-0.5 rounded text-sm"
@@ -117,7 +143,6 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
               isUser ? "text-right" : "text-left"
             }`}
           >
-            {new Date(message.timestamp).toLocaleTimeString()}
             {message.tokens && (
               <span className="ml-2">({message.tokens} tokens)</span>
             )}
