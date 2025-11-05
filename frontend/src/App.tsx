@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { AuthProvider, ChatProvider } from "./context";
 import { Login, Register, VerifyEmail, VerifyPhone } from "./pages/auth";
 import ChatInterface from "./components/chat/ChatInterface";
+import ProtectedRoute from "./components/common/ProtectedRoute";
 
 const AppContent: React.FC = () => {
   return (
@@ -12,7 +13,14 @@ const AppContent: React.FC = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/verify-phone" element={<VerifyPhone />} />
-        <Route path="/chat" element={<ChatInterface />} />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <ChatInterface />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/" element={<Navigate to="/chat" />} />
         <Route path="*" element={<Navigate to="/chat" />} />
       </Routes>
