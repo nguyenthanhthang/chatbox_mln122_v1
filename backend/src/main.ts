@@ -9,8 +9,32 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Enable CORS
+  const corsOrigin = configService.get('CORS_ORIGIN') || 'http://localhost:3001';
+  // Support multiple origins (for Vercel preview deployments)
+  const allowedOrigins = corsOrigin.includes(',')
+    ? corsOrigin.split(',').map((origin: string) => origin.trim())
+    : [corsOrigin];
+  
+  // Also allow any Vercel preview URL (for development)
+  const isVercelPreview = (origin: string) => origin.includes('.vercel.app');
+  
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN') || 'http://localhost:3001',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Allow Vercel preview URLs (for development)
+      if (isVercelPreview(origin)) {
+        return callback(null, true);
+      }
+      
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   });
 
