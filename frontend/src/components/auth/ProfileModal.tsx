@@ -101,20 +101,57 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                   onChange={async (e) => {
                     const f = e.target.files?.[0];
                     if (!f) return;
+
+                    // Validate file size
+                    if (f.size > 5 * 1024 * 1024) {
+                      (await import("../../utils/toast")).toastWarn("File phải nhỏ hơn 5MB");
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                      return;
+                    }
+
+                    // Validate file type
+                    if (!f.type.startsWith("image/")) {
+                      (await import("../../utils/toast")).toastWarn("Chỉ chấp nhận file ảnh");
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                      return;
+                    }
+
+                    if (f.type === "image/svg+xml") {
+                      (await import("../../utils/toast")).toastWarn("SVG files không được hỗ trợ. Vui lòng sử dụng PNG, JPG hoặc WebP.");
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                      return;
+                    }
+
                     try {
                       setUploading(true);
                       const uploaded = await chatService.uploadImage(f);
-                      const url = (uploaded as any).secureUrl || (uploaded as any).url;
-                      if (url && /^https?:\/\//i.test(url)) {
-                        setAvatar(url);
-                        try {
-                          const res = await apiService.updateProfile({ avatar: url });
-                          setUser(res.data);
-                        } catch (err: any) {
-                          const errorMessage = err?.response?.data?.message || err?.message || "Không thể lưu avatar";
-                          (await import("../../utils/toast")).toastError(errorMessage);
-                        }
+                      
+                      // Backend trả về { url, ... } không phải secureUrl
+                      const url = uploaded?.url;
+                      
+                      if (!url || !/^https?:\/\//i.test(url)) {
+                        (await import("../../utils/toast")).toastError("Không nhận được URL ảnh từ server");
+                        return;
                       }
+
+                      setAvatar(url);
+                      (await import("../../utils/toast")).toastSuccess("Tải ảnh lên thành công");
+                      
+                      try {
+                        const res = await apiService.updateProfile({ avatar: url });
+                        setUser(res.data);
+                        (await import("../../utils/toast")).toastSuccess("Cập nhật avatar thành công");
+                      } catch (err: any) {
+                        const errorMessage = err?.response?.data?.message || err?.message || "Không thể lưu avatar";
+                        (await import("../../utils/toast")).toastError(errorMessage);
+                      }
+                    } catch (uploadError: any) {
+                      console.error("Upload error:", uploadError);
+                      const errorMessage = 
+                        uploadError?.response?.data?.message || 
+                        uploadError?.message || 
+                        "Lỗi khi tải ảnh lên";
+                      (await import("../../utils/toast")).toastError(errorMessage);
                     } finally {
                       setUploading(false);
                       if (fileInputRef.current) fileInputRef.current.value = "";

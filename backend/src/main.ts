@@ -1,8 +1,9 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -49,12 +50,21 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
+  // Global exception filter
+  app.useGlobalFilters(new HttpExceptionFilter());
+
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      exceptionFactory: (errors) => {
+        const messages = errors.map((error) =>
+          Object.values(error.constraints || {}).join(', '),
+        );
+        return new BadRequestException(messages.join('; '));
+      },
     }),
   );
 
