@@ -11,13 +11,12 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  Throttle,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import { ConfigService } from '@nestjs/config';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { ChatService } from './chat.service';
 import { AIService } from '../ai/ai.service';
 import { CloudinaryMonitorService } from '../common/services/cloudinary-monitor.service';
