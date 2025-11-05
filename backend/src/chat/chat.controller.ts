@@ -155,14 +155,19 @@ export class ChatController {
             // Tự động nén và tối ưu ảnh
             transformation: [
               {
-                // Giới hạn max width/height để giảm kích thước nhưng giữ tỷ lệ
-                width: 1920,
-                height: 1920,
-                crop: 'limit', // Giới hạn kích thước nhưng không crop (giữ tỷ lệ gốc)
-                // Chỉ nén nếu file lớn (> 500KB), giữ nguyên nếu đã nhỏ
-                quality: file.size > 500 * 1024 ? 'auto:good' : 'auto', // Conditional compression
+                // File đã được compress ở client-side, chỉ cần optimize nhẹ
+                // Giữ nguyên kích thước nếu đã nhỏ (< 1MB sau khi compress)
+                ...(file.size > 1024 * 1024
+                  ? {
+                      width: 1920,
+                      height: 1920,
+                      crop: 'limit',
+                    }
+                  : {}),
+                // Chỉ nén nhẹ nếu file vẫn lớn (> 500KB), giữ nguyên nếu đã nhỏ
+                quality: file.size > 500 * 1024 ? 'auto:good' : 'auto',
                 fetch_format: 'auto', // Tự động convert sang format tối ưu (webp nếu browser hỗ trợ)
-                // Chỉ dùng progressive cho JPEG lớn (> 500KB)
+                // Chỉ dùng progressive cho JPEG lớn
                 ...(file.mimetype === 'image/jpeg' && file.size > 500 * 1024
                   ? { flags: 'progressive' }
                   : {}),

@@ -1,5 +1,6 @@
 import React, { useState, useRef, KeyboardEvent } from "react";
 import { toastError, toastWarn, toastSuccess } from "../../utils/toast";
+import { compressImage, createImagePreview, needsCompression } from "../../utils/image-compressor";
 
 interface InputBoxProps {
   onSendMessage: (message: string, images?: any[]) => void;
@@ -65,31 +66,57 @@ const InputBox: React.FC<InputBoxProps> = ({
 
     setIsUploading(true);
     try {
-      for (const file of Array.from(files)) {
+      // Process all files in parallel for better performance
+      const uploadPromises = Array.from(files).map(async (file) => {
         // Kiểm tra kích thước file
         if (file.size > 5 * 1024 * 1024) {
           toastWarn("File phải nhỏ hơn 5MB");
-          continue;
+          return null;
         }
 
         // Kiểm tra định dạng file - chấp nhận mọi file ảnh (trừ SVG)
         if (!file.type.startsWith("image/")) {
           toastWarn("Chỉ chấp nhận file ảnh");
-          continue;
+          return null;
         }
         
         // Block SVG files vì security risk
         if (file.type === "image/svg+xml") {
           toastWarn("SVG files không được hỗ trợ. Vui lòng sử dụng PNG, JPG hoặc WebP.");
-          continue;
+          return null;
         }
 
+        let preview: string | null = null;
+        
         try {
           const currentIndex = fileIndexRef.current++;
+          
+          // Tối ưu: Hiển thị preview ngay lập tức (base64) - không cần đợi upload
+          preview = await createImagePreview(file);
+          setImages((prev) => [...prev, { base64: preview, mimeType: file.type }]);
+          
+          // Client-side compression trước khi upload (nếu file > 1MB)
+          let fileToUpload = file;
+          if (needsCompression(file, 1)) {
+            try {
+              fileToUpload = await compressImage(file, {
+                maxWidth: 1920,
+                maxHeight: 1920,
+                quality: 0.8,
+                maxSizeMB: 1,
+                outputFormat: 'image/jpeg',
+              });
+            } catch (compressError) {
+              console.warn('Compression failed, using original file:', compressError);
+              // Continue with original file if compression fails
+            }
+          }
+          
           setUploadProgress((prev) => ({ ...prev, [currentIndex]: 0 }));
           
+          // Upload compressed file (nhỏ hơn → upload nhanh hơn)
           const uploaded = await (await import("../../services/chat.service")).chatService.uploadImage(
-            file,
+            fileToUpload,
             (progress) => {
               setUploadProgress((prev) => ({ ...prev, [currentIndex]: progress }));
             }
@@ -102,10 +129,20 @@ const InputBox: React.FC<InputBoxProps> = ({
           });
           
           if (uploaded && uploaded.url) {
-            setImages((prev) => [...prev, { url: uploaded.url, mimeType: uploaded.mimeType }]);
+            // Replace base64 preview với Cloudinary URL (chất lượng tốt hơn)
+            setImages((prev) => {
+              const updated = [...prev];
+              const index = updated.findIndex((img) => img.base64 === preview);
+              if (index !== -1) {
+                updated[index] = { url: uploaded.url, mimeType: uploaded.mimeType };
+              }
+              return updated;
+            });
             toastSuccess("Tải ảnh lên thành công");
+            return uploaded;
           } else {
             toastError("Không nhận được URL ảnh từ server");
+            return null;
           }
         } catch (uploadError: any) {
           const currentIndex = fileIndexRef.current - 1;
@@ -115,6 +152,17 @@ const InputBox: React.FC<InputBoxProps> = ({
             return newProgress;
           });
           
+          // Remove preview if upload fails
+          if (preview) {
+            setImages((prev) => {
+              const index = prev.findIndex((img) => img.base64 === preview);
+              if (index !== -1) {
+                return prev.filter((_, i) => i !== index);
+              }
+              return prev;
+            });
+          }
+          
           // Check if rate limited
           if (uploadError?.response?.status === 429) {
             toastError("Quá nhiều upload trong thời gian ngắn. Vui lòng đợi một chút.");
@@ -122,8 +170,12 @@ const InputBox: React.FC<InputBoxProps> = ({
             const errorMessage = uploadError?.response?.data?.message || uploadError?.message || "Lỗi khi tải ảnh lên";
             toastError(errorMessage);
           }
+          return null;
         }
-      }
+      });
+
+      // Wait for all uploads to complete
+      await Promise.all(uploadPromises);
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || "Lỗi khi tải ảnh lên";
       toastError(errorMessage);
