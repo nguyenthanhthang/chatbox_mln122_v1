@@ -49,8 +49,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
       setUser(res.data);
       onClose();
       window.location.reload();
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      const errorMessage = e?.response?.data?.message || e?.message || "Không thể cập nhật thông tin";
+      (await import("../../utils/toast")).toastError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -109,8 +110,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                         try {
                           const res = await apiService.updateProfile({ avatar: url });
                           setUser(res.data);
-                        } catch (err) {
-                          console.error("Failed to save avatar:", err);
+                        } catch (err: any) {
+                          const errorMessage = err?.response?.data?.message || err?.message || "Không thể lưu avatar";
+                          (await import("../../utils/toast")).toastError(errorMessage);
                         }
                       }
                     } finally {

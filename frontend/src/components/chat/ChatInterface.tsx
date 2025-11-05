@@ -6,6 +6,7 @@ import InputBox from "./InputBox";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import LoadingSpinner from "../common/LoadingSpinner";
+import { toastError } from "../../utils/toast";
 
 const ChatInterface: React.FC = () => {
   const { user, logout } = useAuth();
@@ -42,8 +43,9 @@ const ChatInterface: React.FC = () => {
       setIsNewChat(true);
       setFocusInput(true);
       setSidebarOpen(false);
-    } catch (error) {
-      console.error("Failed to create new chat:", error);
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể tạo cuộc trò chuyện mới";
+      toastError(errorMessage);
     }
   };
 
@@ -52,16 +54,18 @@ const ChatInterface: React.FC = () => {
       await loadSession(sessionId);
       setIsNewChat(false);
       setSidebarOpen(false);
-    } catch (error) {
-      console.error("Failed to load session:", error);
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể tải cuộc trò chuyện";
+      toastError(errorMessage);
     }
   };
 
   const handleDeleteSession = async (sessionId: string) => {
     try {
       await deleteSession(sessionId);
-    } catch (error) {
-      console.error("Failed to delete session:", error);
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể xóa cuộc trò chuyện";
+      toastError(errorMessage);
     }
   };
 
@@ -89,8 +93,9 @@ const ChatInterface: React.FC = () => {
 
       await sendMessage(content, undefined, imageData);
       setIsNewChat(false);
-    } catch (error) {
-      console.error("Failed to send message:", error);
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể gửi tin nhắn";
+      toastError(errorMessage);
     }
   };
 
@@ -98,8 +103,9 @@ const ChatInterface: React.FC = () => {
     if (!currentSession) return;
     try {
       await clearCurrentSession();
-    } catch (error) {
-      console.error("Failed to clear session:", error);
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể xóa lịch sử";
+      toastError(errorMessage);
     }
   };
 

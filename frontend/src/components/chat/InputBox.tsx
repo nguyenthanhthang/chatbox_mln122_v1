@@ -1,4 +1,5 @@
 import React, { useState, useRef, KeyboardEvent } from "react";
+import { toastError, toastWarn, toastSuccess } from "../../utils/toast";
 
 interface InputBoxProps {
   onSendMessage: (message: string, images?: any[]) => void;
@@ -16,8 +17,10 @@ const InputBox: React.FC<InputBoxProps> = ({
   const [message, setMessage] = useState("");
   const [images, setImages] = useState<{ url?: string; base64?: string; mimeType: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ [key: number]: number }>({});
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileIndexRef = useRef(0);
 
   React.useEffect(() => {
     if (autoFocus && textareaRef.current) {
@@ -63,16 +66,67 @@ const InputBox: React.FC<InputBoxProps> = ({
     setIsUploading(true);
     try {
       for (const file of Array.from(files)) {
-        if (file.size > 10 * 1024 * 1024) {
-          alert("File phải nhỏ hơn 10MB");
+        // Kiểm tra kích thước file
+        if (file.size > 5 * 1024 * 1024) {
+          toastWarn("File phải nhỏ hơn 5MB");
           continue;
         }
-        const uploaded = await (await import("../../services/chat.service")).chatService.uploadImage(file);
-        setImages((prev) => [...prev, { url: (uploaded as any).url, mimeType: uploaded.mimeType }]);
+
+        // Kiểm tra định dạng file - chấp nhận mọi file ảnh (trừ SVG)
+        if (!file.type.startsWith("image/")) {
+          toastWarn("Chỉ chấp nhận file ảnh");
+          continue;
+        }
+        
+        // Block SVG files vì security risk
+        if (file.type === "image/svg+xml") {
+          toastWarn("SVG files không được hỗ trợ. Vui lòng sử dụng PNG, JPG hoặc WebP.");
+          continue;
+        }
+
+        try {
+          const currentIndex = fileIndexRef.current++;
+          setUploadProgress((prev) => ({ ...prev, [currentIndex]: 0 }));
+          
+          const uploaded = await (await import("../../services/chat.service")).chatService.uploadImage(
+            file,
+            (progress) => {
+              setUploadProgress((prev) => ({ ...prev, [currentIndex]: progress }));
+            }
+          );
+          
+          setUploadProgress((prev) => {
+            const newProgress = { ...prev };
+            delete newProgress[currentIndex];
+            return newProgress;
+          });
+          
+          if (uploaded && uploaded.url) {
+            setImages((prev) => [...prev, { url: uploaded.url, mimeType: uploaded.mimeType }]);
+            toastSuccess("Tải ảnh lên thành công");
+          } else {
+            toastError("Không nhận được URL ảnh từ server");
+          }
+        } catch (uploadError: any) {
+          const currentIndex = fileIndexRef.current - 1;
+          setUploadProgress((prev) => {
+            const newProgress = { ...prev };
+            delete newProgress[currentIndex];
+            return newProgress;
+          });
+          
+          // Check if rate limited
+          if (uploadError?.response?.status === 429) {
+            toastError("Quá nhiều upload trong thời gian ngắn. Vui lòng đợi một chút.");
+          } else {
+            const errorMessage = uploadError?.response?.data?.message || uploadError?.message || "Lỗi khi tải ảnh lên";
+            toastError(errorMessage);
+          }
+        }
       }
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      alert("Lỗi khi tải ảnh lên");
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Lỗi khi tải ảnh lên";
+      toastError(errorMessage);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -94,12 +148,21 @@ const InputBox: React.FC<InputBoxProps> = ({
             <div key={index} className="relative group animate-scale-in">
               <img
                 src={image.url || image.base64 || ""}
-                alt={`Upload ${index + 1}`}
+                alt={`Ảnh tải lên ${index + 1}`}
                 className="w-20 h-20 object-cover rounded-2xl border-2 border-gray-200 shadow-lg group-hover:shadow-xl transition-all"
               />
-              {isUploading && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs rounded-2xl backdrop-blur-sm">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              {isUploading && Object.values(uploadProgress).length > 0 && (
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-xs rounded-2xl backdrop-blur-sm">
+                  <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mb-2"></div>
+                  <div className="text-xs font-medium">
+                    {Object.values(uploadProgress)[0] || 0}%
+                  </div>
+                  <div className="w-full max-w-[60px] h-1 bg-white/20 rounded-full mt-1 overflow-hidden">
+                    <div
+                      className="h-full bg-white rounded-full transition-all duration-300"
+                      style={{ width: `${Object.values(uploadProgress)[0] || 0}%` }}
+                    ></div>
+                  </div>
                 </div>
               )}
               <button
@@ -135,7 +198,7 @@ const InputBox: React.FC<InputBoxProps> = ({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*" // Chấp nhận mọi file ảnh
             multiple
             onChange={handleImageUpload}
             className="hidden"

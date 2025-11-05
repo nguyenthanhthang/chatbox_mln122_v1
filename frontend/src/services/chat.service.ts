@@ -146,7 +146,10 @@ class ChatService {
     return response.data;
   }
 
-  async uploadImage(file: File): Promise<{
+  async uploadImage(
+    file: File,
+    onProgress?: (progress: number) => void
+  ): Promise<{
     url: string;
     publicId?: string;
     width?: number;
@@ -159,8 +162,16 @@ class ChatService {
     const formData = new FormData();
     formData.append("image", file);
 
+    // Không set Content-Type thủ công - để axios tự động detect FormData và set boundary
     const response = await apiService.post("/chat/upload-image", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          onProgress(progress);
+        }
+      },
     });
     return response.data;
   }

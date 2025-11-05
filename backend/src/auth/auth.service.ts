@@ -24,7 +24,7 @@ export class AuthService {
       const userId = getUserId(user);
 
       return {
-        message: 'User registered successfully. You can now login.',
+        message: 'Đăng ký thành công. Bạn có thể đăng nhập ngay.',
         userId: userId,
         user: {
           id: userId,
@@ -115,6 +115,6 @@ export class AuthService {
 
   async logout(userId: string) {
     await this.usersService.updateRefreshToken(userId, null);
-    return { message: 'Logged out successfully' };
+    return { message: 'Đăng xuất thành công' };
   }
 }

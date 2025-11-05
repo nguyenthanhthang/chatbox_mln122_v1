@@ -6,6 +6,7 @@ import React, {
   useCallback,
 } from "react";
 import { chatService } from "../services/chat.service";
+import { toastError, toastSuccess } from "../utils/toast";
 
 export interface Message {
   id: string;
@@ -99,8 +100,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       try {
         setIsLoading(true);
         const session = await chatService.createSession({
-          title: title || "New Chat",
-          model: model || "gpt-4",
+          title: title || "Cuộc trò chuyện mới",
+          model: model || "gemini-1.5-flash",
         });
 
         // Normalize id in case backend returns _id
@@ -112,8 +113,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         setCurrentSession(normalized);
         setMessages([]);
         await loadSessions(); // Refresh sessions list
-      } catch (error) {
-        console.error("Failed to create session:", error);
+        toastSuccess("Tạo cuộc trò chuyện mới thành công");
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.message || error?.message || "Không thể tạo cuộc trò chuyện mới";
+        toastError(errorMessage);
         throw error;
       } finally {
         setIsLoading(false);
@@ -138,8 +141,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
       setCurrentSession(normalized);
       setMessages(history);
-    } catch (error) {
-      console.error("Failed to load session:", error);
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể tải cuộc trò chuyện";
+      toastError(errorMessage);
       throw error;
     } finally {
       setIsLoading(false);
@@ -152,6 +156,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       try {
         await chatService.deleteSession(sessionId);
         await loadSessions();
+        toastSuccess("Xóa cuộc trò chuyện thành công");
 
         // If deleted session is current, reset and create new one
         if (currentSession?.id === sessionId) {
@@ -159,8 +164,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           setMessages([]);
           await createNewSession();
         }
-      } catch (error) {
-        console.error("Failed to delete session:", error);
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.message || error?.message || "Không thể xóa cuộc trò chuyện";
+        toastError(errorMessage);
         throw error;
       }
     },
@@ -178,9 +184,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         // ensure we have a session id to send into
         let sessionIdForSend: string | undefined = currentSession?.id;
         if (!sessionIdForSend) {
-          const created = await chatService.createSession({
-            title: "New Chat",
-          });
+        const created = await chatService.createSession({
+          title: "Cuộc trò chuyện mới",
+        });
           const normalized: ChatSession = {
             ...(created as any),
             id: (created as any).id || (created as any)._id,
@@ -251,6 +257,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       } catch (error) {
         console.error("Failed to send message:", error);
         // Replace placeholder with an error message
+        const errorMessage = (error as any)?.response?.data?.message || (error as any)?.message || "Có lỗi khi gửi tin nhắn";
+        toastError(errorMessage);
         setMessages((prev) =>
           prev.map((m) =>
             m.id.startsWith("ai-pending-")
@@ -278,8 +286,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     try {
       await chatService.clearSessionHistory(currentSession.id);
       setMessages([]);
-    } catch (error) {
-      console.error("Failed to clear session:", error);
+      toastSuccess("Đã xóa lịch sử cuộc trò chuyện");
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể xóa lịch sử";
+      toastError(errorMessage);
       throw error;
     }
   }, [currentSession]);
@@ -291,8 +301,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       setMessages([]);
       setCurrentSession(null);
       await loadSessions();
-    } catch (error) {
-      console.error("Failed to clear all history:", error);
+      toastSuccess("Đã xóa toàn bộ lịch sử");
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể xóa lịch sử";
+      toastError(errorMessage);
       throw error;
     }
   }, []);
@@ -307,8 +319,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         id: s.id || s._id,
       }));
       setSessions(normalized);
-    } catch (error) {
-      console.error("Failed to load sessions:", error);
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Không thể tải danh sách cuộc trò chuyện";
+      toastError(errorMessage);
     } finally {
       setSessionsLoading(false);
     }
@@ -320,8 +333,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       try {
         const updatedSettings = await chatService.updateAISettings(settings);
         setAISettings(updatedSettings);
-      } catch (error) {
-        console.error("Failed to update AI settings:", error);
+        toastSuccess("Cập nhật cài đặt AI thành công");
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.message || error?.message || "Không thể cập nhật cài đặt AI";
+        toastError(errorMessage);
         throw error;
       }
     },
@@ -332,7 +347,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     try {
       const settings = await chatService.getAISettings();
       setAISettings(settings);
-    } catch (error) {
+    } catch (error: any) {
+      // Silent fail for loading settings - not critical
       console.error("Failed to load AI settings:", error);
     }
   }, []);
@@ -341,7 +357,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     try {
       const models = await chatService.getAvailableModels();
       setAvailableModels(models);
-    } catch (error) {
+    } catch (error: any) {
+      // Silent fail for loading models - not critical
       console.error("Failed to load available models:", error);
     }
   }, []);
@@ -373,7 +390,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 export const useChat = (): ChatContextType => {
   const context = useContext(ChatContext);
   if (context === undefined) {
-    throw new Error("useChat must be used within a ChatProvider");
+    throw new Error("useChat phải được sử dụng trong ChatProvider");
   }
   return context;
 };

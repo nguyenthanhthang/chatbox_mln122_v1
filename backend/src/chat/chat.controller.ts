@@ -11,13 +11,16 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  Throttle,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import { ConfigService } from '@nestjs/config';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { ChatService } from './chat.service';
 import { AIService } from '../ai/ai.service';
+import { CloudinaryMonitorService } from '../common/services/cloudinary-monitor.service';
 import {
   SendMessageDto,
   CreateSessionDto,
@@ -26,6 +29,7 @@ import {
 } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { validateFileSignature } from '../common/utils/file-signature.util';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -34,6 +38,7 @@ export class ChatController {
     private readonly chatService: ChatService,
     private readonly aiService: AIService,
     private readonly configService: ConfigService,
+    private readonly cloudinaryMonitor: CloudinaryMonitorService,
   ) {
     const url = this.configService.get<string>('CLOUDINARY_URL');
     if (url) {
@@ -88,7 +93,7 @@ export class ChatController {
   @Delete('sessions/:id')
   async deleteSession(@Param('id') id: string, @CurrentUser() user: any) {
     await this.chatService.deleteSession(id, user.id);
-    return { message: 'Chat session deleted successfully' };
+    return { message: 'Đã xóa cuộc trò chuyện thành công' };
   }
 
   @Patch('sessions/:id')
@@ -110,31 +115,61 @@ export class ChatController {
   }
 
   @Post('upload-image')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ short: { ttl: 60000, limit: 5 } }) // 5 uploads per minute
   @UseInterceptors(
     FileInterceptor('image', {
       storage: memoryStorage(),
       fileFilter: (req, file, cb) => {
-        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
-          return cb(new Error('Only image files are allowed!'), false);
+        // Chấp nhận mọi file ảnh nhưng block SVG (security risk)
+        if (!file.mimetype.startsWith('image/')) {
+          return cb(new Error('Chỉ chấp nhận file ảnh!'), false);
+        }
+        // Block SVG files vì có thể chứa XSS
+        if (file.mimetype === 'image/svg+xml') {
+          return cb(new Error('SVG files không được hỗ trợ vì lý do bảo mật. Vui lòng sử dụng PNG, JPG hoặc WebP.'), false);
         }
         cb(null, true);
       },
-      limits: { fileSize: 10 * 1024 * 1024 },
+      limits: { fileSize: 5 * 1024 * 1024 }, // Giảm xuống 5MB để giảm rủi ro
     }),
   )
   async uploadImage(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
-      throw new Error('No file uploaded');
+      throw new BadRequestException('Không có file được tải lên');
+    }
+
+    // Validate file signature (magic numbers) - security check
+    const isValidSignature = validateFileSignature(file.buffer, file.mimetype);
+    if (!isValidSignature) {
+      throw new BadRequestException(
+        'File signature không khớp với định dạng. File có thể đã bị chỉnh sửa hoặc không phải là file ảnh hợp lệ.',
+      );
     }
 
     try {
       const uploadResult = await new Promise<any>((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           {
-            folder: 'chatbox/avatars',
+            folder: 'chatbox/images',
+            // Tự động nén và tối ưu ảnh
             transformation: [
-              { width: 256, height: 256, crop: 'fill', gravity: 'face' },
+              {
+                // Giới hạn max width/height để giảm kích thước nhưng giữ tỷ lệ
+                width: 1920,
+                height: 1920,
+                crop: 'limit', // Giới hạn kích thước nhưng không crop (giữ tỷ lệ gốc)
+                // Chỉ nén nếu file lớn (> 500KB), giữ nguyên nếu đã nhỏ
+                quality: file.size > 500 * 1024 ? 'auto:good' : 'auto', // Conditional compression
+                fetch_format: 'auto', // Tự động convert sang format tối ưu (webp nếu browser hỗ trợ)
+                // Chỉ dùng progressive cho JPEG lớn (> 500KB)
+                ...(file.mimetype === 'image/jpeg' && file.size > 500 * 1024
+                  ? { flags: 'progressive' }
+                  : {}),
+              },
             ],
+            // Tự động detect loại resource
+            resource_type: 'auto',
           },
           (error, result) => {
             if (error) return reject(error);
@@ -143,6 +178,12 @@ export class ChatController {
         );
         stream.end(file.buffer);
       });
+
+      // Log upload for monitoring
+      await this.cloudinaryMonitor.logUpload(
+        uploadResult.bytes || file.size,
+        true, // transformed
+      );
 
       return {
         url: uploadResult.secure_url || uploadResult.url,
@@ -155,7 +196,11 @@ export class ChatController {
         filename: file.originalname,
       };
     } catch (err: any) {
-      const msg = `Cloudinary upload failed: ${err?.message || String(err)}`;
+      // Kiểm tra nếu lỗi do Cloudinary config thiếu
+      if (err?.message?.includes('Missing') || err?.message?.includes('Invalid')) {
+        throw new BadRequestException('Cấu hình Cloudinary chưa được thiết lập. Vui lòng liên hệ quản trị viên.');
+      }
+      const msg = `Lỗi khi tải ảnh lên: ${err?.message || String(err)}`;
       // Surface to client as 400 so FE can read the message
       throw new BadRequestException(msg);
     }
@@ -178,13 +223,13 @@ export class ChatController {
     @CurrentUser() user: any,
   ) {
     await this.chatService.clearSessionHistory(sessionId, user.id);
-    return { message: 'Session history cleared successfully' };
+    return { message: 'Đã xóa lịch sử cuộc trò chuyện thành công' };
   }
 
   @Post('clear')
   async clearAllHistory(@CurrentUser() user: any) {
     await this.chatService.clearAllUserHistory(user.id);
-    return { message: 'All chat history cleared successfully' };
+    return { message: 'Đã xóa toàn bộ lịch sử thành công' };
   }
 
   @Get('export')

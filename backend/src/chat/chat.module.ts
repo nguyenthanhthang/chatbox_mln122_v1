@@ -12,6 +12,7 @@ import {
   AISettingsSchema,
 } from '../database/schemas/ai-settings.schema';
 import { AIModule } from '../ai/ai.module';
+import { CloudinaryMonitorService } from '../common/services/cloudinary-monitor.service';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { AIModule } from '../ai/ai.module';
     AIModule,
   ],
   controllers: [ChatController],
-  providers: [ChatService],
+  providers: [ChatService, CloudinaryMonitorService],
   exports: [ChatService],
 })
 export class ChatModule {}

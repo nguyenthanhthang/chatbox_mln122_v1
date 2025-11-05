@@ -92,11 +92,18 @@ const Header: React.FC<HeaderProps> = ({
                             const res = await api.updateProfile({ backgroundUrl: url });
                             const { setUser } = await import("../../utils/helpers");
                             setUser(res.data);
-                          } catch {}
+                            (await import("../../utils/toast")).toastSuccess("Cập nhật ảnh nền thành công");
+                          } catch (err: any) {
+                            const errorMessage = err?.response?.data?.message || err?.message || "Không thể cập nhật ảnh nền";
+                            (await import("../../utils/toast")).toastError(errorMessage);
+                          }
                           localStorage.setItem("bgUrl", url);
                           document.documentElement.style.setProperty("--poster-image", `url("${url}")`);
                         }
-                      } catch {}
+                      } catch (err: any) {
+                        const errorMessage = err?.response?.data?.message || err?.message || "Không thể tải ảnh lên";
+                        (await import("../../utils/toast")).toastError(errorMessage);
+                      }
                     };
                     input.click();
                   }}
