@@ -62,6 +62,8 @@ const RegisterForm: React.FC = () => {
     <Box
       component="form"
       onSubmit={handleSubmit(onSubmit)}
+      data-1p-ignore="true"
+      data-lpignore="true"
       sx={{
         display: "flex",
         flexDirection: "column",

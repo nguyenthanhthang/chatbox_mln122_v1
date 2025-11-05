@@ -12,7 +12,9 @@ import { StatsModule } from './stats/stats.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['config/development.env', '.env'],
+      envFilePath: process.env.NODE_ENV === 'production' 
+        ? ['.env.production', '.env']
+        : ['.env', 'config/development.env'], // .env được ưu tiên cao hơn
     }),
     DatabaseModule,
     AuthModule,

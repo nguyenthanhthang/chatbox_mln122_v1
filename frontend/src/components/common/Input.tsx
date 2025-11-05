@@ -31,12 +31,20 @@ const Input: React.FC<InputProps> = ({
 
   const inputType = type === "password" && showPassword ? "text" : type;
 
+  // Thêm attributes để giảm thiểu password manager warnings
+  const inputProps = type === "password" ? {
+    ...props.inputProps,
+    "data-1p-ignore": "true", // Bỏ qua 1Password
+    "data-lpignore": "true", // Bỏ qua LastPass
+  } : props.inputProps;
+
   return (
     <TextField
       type={inputType}
       fullWidth
       variant="outlined"
       {...props}
+      inputProps={inputProps}
       InputProps={{
         ...props.InputProps,
         endAdornment:
