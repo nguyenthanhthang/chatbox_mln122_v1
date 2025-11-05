@@ -13,10 +13,17 @@ Hướng dẫn nhanh để deploy Chatbox lên Render (Backend) và Vercel (Fron
 1. Truy cập https://render.com → **"New +"** → **"Web Service"**
 2. Connect GitHub repo
 3. Cấu hình:
+
    - **Name**: `chatbox-backend`
-   - **Root Directory**: `backend` ⚠️
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm run start:prod`
+   - **Root Directory**: `backend` ⚠️ **QUAN TRỌNG - phải đúng**
+   - **Build Command**: `npm install && npm run build` ⚠️
+   - **Start Command**: `npm run start:prod` ⚠️ **KHÔNG phải `node index.js`**
+
+   ⚠️ **LƯU Ý QUAN TRỌNG:**
+
+   - Start Command phải là `npm run start:prod`, **KHÔNG** dùng `node index.js`
+   - Nếu thấy Start Command là `node index.js`, phải sửa ngay!
+
 4. Thêm Environment Variables (copy và paste vào Render Dashboard):
 
    ```
@@ -45,22 +52,60 @@ Hướng dẫn nhanh để deploy Chatbox lên Render (Backend) và Vercel (Fron
    - **Output Directory**: `build`
 4. Thêm Environment Variables:
    ```
-   REACT_APP_API_URL=https://chatbox-backend.onrender.com/api
-   REACT_APP_SOCKET_URL=https://chatbox-backend.onrender.com
+   REACT_APP_API_URL=https://chatbox-mln122-v1.onrender.com/api
+   REACT_APP_SOCKET_URL=https://chatbox-mln122-v1.onrender.com
    ```
-   ⚠️ Thay thế với backend URL thật của bạn!
+   ⚠️ **Backend URL của bạn**: `https://chatbox-mln122-v1.onrender.com`
 5. Click **"Deploy"**
 6. **Lưu frontend URL** (ví dụ: `https://chatbox-frontend.vercel.app`)
 
 ## 🔄 Cập nhật CORS (QUAN TRỌNG!)
 
-1. Quay lại **Render Dashboard**
-2. Vào **Environment Variables**
-3. Update:
-   - `CORS_ORIGIN` = Vercel URL của bạn
-   - `FRONTEND_URL` = Vercel URL của bạn
-   - `SOCKET_CORS_ORIGIN` = Vercel URL của bạn
-4. **Manual Deploy** → **"Deploy latest commit"**
+Sau khi deploy frontend lên Vercel thành công, bạn sẽ có URL như: `https://chatbox-frontend.vercel.app`
+
+### Bước 1: Lấy Frontend URL từ Vercel
+
+1. Vào Vercel Dashboard → chọn project
+2. Copy **Production URL** (ví dụ: `https://chatbox-frontend.vercel.app`)
+
+### Bước 2: Cập nhật CORS trong Render
+
+1. Quay lại **Render Dashboard** → chọn backend service
+2. Vào tab **Environment** (hoặc **Environment Variables**)
+3. Tìm và **Edit** các biến sau (click icon bút ✏️ bên cạnh mỗi biến):
+
+   **Biến có sẵn - cần Edit:**
+
+   - `CORS_ORIGIN` → Click Edit → Thay bằng: `https://chatbox-mln122-v1-pis1ultwx.vercel.app`
+
+   **Biến chưa có - cần Add:**
+
+   - Nếu không thấy `FRONTEND_URL`, click **"Edit"** (hoặc **"+"** nếu có) → Add:
+     - KEY: `FRONTEND_URL`
+     - VALUE: `https://chatbox-mln122-v1-pis1ultwx.vercel.app`
+   - Nếu không thấy `SOCKET_CORS_ORIGIN`, click **"Edit"** (hoặc **"+"** nếu có) → Add:
+     - KEY: `SOCKET_CORS_ORIGIN`
+     - VALUE: `https://chatbox-mln122-v1-pis1ultwx.vercel.app`
+
+   ⚠️ **Lưu ý**:
+
+   - URL không có `/` ở cuối!
+   - Nếu biến đã có, click icon ✏️ để edit
+   - Nếu biến chưa có, click nút **"Add"** hoặc **"+"** để thêm mới
+
+4. **Save Changes** hoặc **Save**
+
+### Bước 3: Redeploy Backend
+
+1. Vào tab **Manual Deploy** (hoặc **Deploys**)
+2. Click **"Deploy latest commit"**
+3. Đợi deploy hoàn thành (1-2 phút)
+
+### Bước 4: Test
+
+1. Mở frontend URL trên Vercel
+2. Test đăng nhập/đăng ký
+3. Nếu vẫn lỗi CORS, kiểm tra lại URL đã đúng chưa (có `https://` và không có `/` ở cuối)
 
 ## ✅ Test
 
