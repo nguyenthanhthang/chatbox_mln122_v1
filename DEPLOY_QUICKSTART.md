@@ -17,7 +17,8 @@ Hướng dẫn nhanh để deploy Chatbox lên Render (Backend) và Vercel (Fron
    - **Root Directory**: `backend` ⚠️
    - **Build Command**: `npm install && npm run build`
    - **Start Command**: `npm run start:prod`
-4. Thêm Environment Variables:
+4. Thêm Environment Variables (copy và paste vào Render Dashboard):
+
    ```
    NODE_ENV=production
    MONGODB_URI=<your-mongodb-connection-string>
@@ -29,6 +30,7 @@ Hướng dẫn nhanh để deploy Chatbox lên Render (Backend) và Vercel (Fron
    FRONTEND_URL=https://your-frontend.vercel.app
    SOCKET_CORS_ORIGIN=https://your-frontend.vercel.app
    ```
+
 5. Click **"Create Web Service"**
 6. **Lưu backend URL** (ví dụ: `https://chatbox-backend.onrender.com`)
 
@@ -75,4 +77,3 @@ Hướng dẫn nhanh để deploy Chatbox lên Render (Backend) và Vercel (Fron
 ## 📖 Chi tiết
 
 Xem file `DEPLOY.md` để biết thêm chi tiết và troubleshooting.
-
