@@ -89,37 +89,101 @@ docker-compose down -v
 
 ## 🌐 Deploy lên Cloud Platforms
 
-### Option 1: Deploy Backend lên Railway/Render
+### 🚀 Deploy Backend lên Render
 
-1. **Railway** (https://railway.app)
-   - Connect GitHub repo
-   - Chọn `backend` folder
-   - Set environment variables trong dashboard
-   - Railway tự động detect NestJS và deploy
+#### Bước 1: Chuẩn bị GitHub Repository
+- Đảm bảo code đã được push lên GitHub
+- Đảm bảo không có secrets trong code (đã check `.gitignore`)
 
-2. **Render** (https://render.com)
-   - New Web Service
-   - Connect repo
-   - Root Directory: `backend`
-   - Build Command: `npm install && npm run build`
-   - Start Command: `npm run start:prod`
-   - Set environment variables
+#### Bước 2: Tạo Web Service trên Render
 
-### Option 2: Deploy Frontend lên Vercel/Netlify
+1. Truy cập https://render.com và đăng nhập
+2. Click **"New +"** → **"Web Service"**
+3. Connect GitHub repository của bạn
+4. Cấu hình như sau:
+   - **Name**: `chatbox-backend` (hoặc tên bạn muốn)
+   - **Region**: Chọn region gần nhất
+   - **Branch**: `master` hoặc `main`
+   - **Root Directory**: `backend` ⚠️ **QUAN TRỌNG**
+   - **Runtime**: `Node`
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm run start:prod`
+   - **Plan**: Chọn plan phù hợp (Starter plan miễn phí)
 
-1. **Vercel** (https://vercel.com)
-   - Import project
-   - Root Directory: `frontend`
-   - Build Command: `npm run build`
-   - Output Directory: `build`
-   - Environment Variables:
-     - `REACT_APP_API_URL`: URL của backend API
-     - `REACT_APP_SOCKET_URL`: URL của backend Socket.io
+5. **Environment Variables** - Thêm các biến sau trong Render Dashboard:
 
-2. **Netlify** (https://netlify.com)
-   - Tương tự Vercel
-   - Build command: `cd frontend && npm install && npm run build`
-   - Publish directory: `frontend/build`
+   **Bắt buộc:**
+   ```
+   NODE_ENV=production
+   PORT=10000
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/ai-chatbot?retryWrites=true&w=majority
+   DB_NAME=ai-chatbot
+   JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+   JWT_REFRESH_SECRET=your-super-secret-refresh-key-min-32-chars
+   GOOGLE_AI_API_KEY=your-google-ai-api-key
+   CORS_ORIGIN=https://your-frontend-domain.vercel.app
+   FRONTEND_URL=https://your-frontend-domain.vercel.app
+   SOCKET_CORS_ORIGIN=https://your-frontend-domain.vercel.app
+   ```
+
+   **Tùy chọn:**
+   ```
+   CLOUDINARY_CLOUD_NAME=your-cloud-name
+   CLOUDINARY_API_KEY=your-api-key
+   CLOUDINARY_API_SECRET=your-api-secret
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASS=your-app-password
+   ```
+
+6. Click **"Create Web Service"**
+
+7. **Lưu URL backend**: Sau khi deploy xong, Render sẽ cung cấp URL như `https://chatbox-backend.onrender.com`. Lưu URL này để cấu hình frontend.
+
+#### Bước 3: Cập nhật CORS sau khi có Frontend URL
+- Sau khi deploy frontend, quay lại Render Dashboard
+- Update `CORS_ORIGIN`, `FRONTEND_URL`, `SOCKET_CORS_ORIGIN` với URL frontend thật
+- Click **"Manual Deploy"** → **"Deploy latest commit"**
+
+---
+
+### 🎨 Deploy Frontend lên Vercel
+
+#### Bước 1: Chuẩn bị
+- Đảm bảo đã có backend URL từ Render (ví dụ: `https://chatbox-backend.onrender.com`)
+
+#### Bước 2: Deploy lên Vercel
+
+1. Truy cập https://vercel.com và đăng nhập (có thể dùng GitHub)
+2. Click **"Add New..."** → **"Project"**
+3. Import GitHub repository của bạn
+4. Cấu hình project:
+   - **Framework Preset**: `Create React App`
+   - **Root Directory**: `frontend` ⚠️ **QUAN TRỌNG**
+   - **Build Command**: `npm run build` (hoặc để mặc định)
+   - **Output Directory**: `build`
+   - **Install Command**: `npm install`
+
+5. **Environment Variables** - Thêm các biến sau:
+   ```
+   REACT_APP_API_URL=https://chatbox-backend.onrender.com/api
+   REACT_APP_SOCKET_URL=https://chatbox-backend.onrender.com
+   ```
+   ⚠️ **Thay thế URL** bằng URL backend thật của bạn!
+
+6. Click **"Deploy"**
+
+7. Sau khi deploy xong, Vercel sẽ cung cấp URL như `https://chatbox-frontend.vercel.app`
+
+#### Bước 3: Cập nhật Backend CORS
+- Quay lại Render Dashboard
+- Update `CORS_ORIGIN`, `FRONTEND_URL`, `SOCKET_CORS_ORIGIN` với URL Vercel của bạn
+- Redeploy backend
+
+#### Bước 4: Custom Domain (Tùy chọn)
+- Vercel cho phép thêm custom domain miễn phí
+- Render cũng hỗ trợ custom domain (có thể cần upgrade plan)
 
 ### Option 3: Deploy MongoDB lên MongoDB Atlas
 
@@ -135,23 +199,41 @@ docker-compose down -v
 mongodb+srv://username:password@cluster.mongodb.net/database-name?retryWrites=true&w=majority
 ```
 
-## 📝 Checklist trước khi Deploy
+## 📝 Checklist Deploy Render + Vercel
 
-### Backend
-- [ ] Đã build thành công: `npm run build`
-- [ ] Đã set tất cả environment variables
-- [ ] `NODE_ENV=production`
-- [ ] JWT secrets đã được thay đổi (không dùng default)
-- [ ] CORS_ORIGIN đã set đúng frontend URL
-- [ ] MongoDB connection string đã đúng
+### Trước khi Deploy
 
-### Frontend
-- [ ] Đã build thành công: `npm run build`
-- [ ] `REACT_APP_API_URL` đã set đúng backend URL
-- [ ] `REACT_APP_SOCKET_URL` đã set đúng socket URL
-- [ ] Đã test kết nối với backend
+#### Backend (Render)
+- [ ] Code đã push lên GitHub (không có secrets)
+- [ ] Đã build thành công local: `cd backend && npm run build`
+- [ ] Đã chuẩn bị MongoDB Atlas connection string
+- [ ] Đã chuẩn bị Google AI API key
+- [ ] Đã chuẩn bị JWT secrets (min 32 ký tự, không dùng default)
 
-### Git
+#### Frontend (Vercel)
+- [ ] Code đã push lên GitHub
+- [ ] Đã build thành công local: `cd frontend && npm run build`
+- [ ] Đã có backend URL từ Render (để set environment variables)
+
+### Sau khi Deploy Backend (Render)
+
+- [ ] Backend deploy thành công (check logs)
+- [ ] Backend URL hoạt động (ví dụ: `https://chatbox-backend.onrender.com/api`)
+- [ ] Test health endpoint (nếu có)
+- [ ] Lưu backend URL để cấu hình frontend
+
+### Sau khi Deploy Frontend (Vercel)
+
+- [ ] Frontend deploy thành công
+- [ ] Frontend URL hoạt động
+- [ ] **QUAN TRỌNG**: Quay lại Render Dashboard
+- [ ] Update `CORS_ORIGIN`, `FRONTEND_URL`, `SOCKET_CORS_ORIGIN` với URL Vercel
+- [ ] Redeploy backend trên Render
+- [ ] Test kết nối frontend → backend
+- [ ] Test đăng nhập/đăng ký
+- [ ] Test chat functionality
+
+### Git Security
 - [ ] Đã xóa tất cả API keys thật khỏi code
 - [ ] Đã commit `.env.example` files
 - [ ] Đã verify `.gitignore` đã ignore `.env` files
@@ -210,24 +292,105 @@ REACT_APP_SOCKET_URL=https://your-backend-api.com
 
 ## 🐛 Troubleshooting
 
-### Backend không kết nối được MongoDB
-- Kiểm tra `MONGODB_URI` đúng format
-- Kiểm tra network/firewall rules
-- Với MongoDB Atlas: whitelist IP address
+### Render Backend Issues
 
-### CORS errors
-- Đảm bảo `CORS_ORIGIN` đúng với frontend URL
-- Kiểm tra protocol (http vs https)
+#### Build fails trên Render
+- **Lỗi**: `npm install` fails
+  - **Giải pháp**: Kiểm tra `package.json` có đúng không, đảm bảo `backend/package.json` tồn tại
+- **Lỗi**: `npm run build` fails
+  - **Giải pháp**: Test build local trước: `cd backend && npm run build`
+  - Kiểm tra TypeScript errors trong logs
+- **Lỗi**: Root Directory không đúng
+  - **Giải pháp**: Đảm bảo Root Directory = `backend` trong Render settings
 
-### Frontend không kết nối backend
-- Kiểm tra `REACT_APP_API_URL` đúng
-- Đảm bảo backend đã chạy và accessible
-- Kiểm tra CORS settings
+#### Backend không start được
+- **Lỗi**: Port already in use
+  - **Giải pháp**: Render tự động set PORT, không cần set manual. Đảm bảo code dùng `process.env.PORT`
+- **Lỗi**: Cannot connect to MongoDB
+  - **Giải pháp**: 
+    - Kiểm tra MongoDB Atlas đã whitelist IP `0.0.0.0/0` (cho phép tất cả)
+    - Kiểm tra connection string đúng format
+    - Kiểm tra username/password trong connection string
+
+#### Backend sleep sau 15 phút (Free plan)
+- **Vấn đề**: Render free plan sẽ sleep service sau 15 phút không có traffic
+- **Giải pháp**: 
+  - Upgrade lên paid plan
+  - Hoặc dùng service như UptimeRobot để ping backend mỗi 5 phút
+
+### Vercel Frontend Issues
+
+#### Build fails trên Vercel
+- **Lỗi**: Build command fails
+  - **Giải pháp**: 
+    - Đảm bảo Root Directory = `frontend`
+    - Đảm bảo Build Command = `npm run build`
+    - Đảm bảo Output Directory = `build`
+- **Lỗi**: Environment variables không được inject
+  - **Giải pháp**: 
+    - Đảm bảo biến bắt đầu với `REACT_APP_`
+    - Redeploy sau khi thêm environment variables
+- **Lỗi**: `REACT_APP_API_URL` undefined
+  - **Giải pháp**: 
+    - Set environment variables trong Vercel Dashboard
+    - Redeploy project
+
+#### Frontend không kết nối được Backend
+- **Lỗi**: CORS errors
+  - **Giải pháp**: 
+    - Backend phải set `CORS_ORIGIN` = Vercel URL
+    - Redeploy backend sau khi update CORS
+- **Lỗi**: Network error khi call API
+  - **Giải pháp**: 
+    - Kiểm tra `REACT_APP_API_URL` đúng format (có `/api` ở cuối)
+    - Kiểm tra backend đã chạy và accessible
+    - Test backend URL trực tiếp trong browser
+
+### MongoDB Atlas Issues
+
+#### Cannot connect to MongoDB
+- **Lỗi**: Authentication failed
+  - **Giải pháp**: 
+    - Kiểm tra username/password trong connection string
+    - Tạo database user mới trong MongoDB Atlas
+- **Lỗi**: IP not whitelisted
+  - **Giải pháp**: 
+    - Vào MongoDB Atlas → Network Access
+    - Add IP Address: `0.0.0.0/0` (cho phép tất cả)
+    - Hoặc add IP cụ thể của Render (check Render docs)
+
+### CORS Errors
+
+#### Frontend → Backend CORS error
+- **Lỗi**: `Access-Control-Allow-Origin` header missing
+  - **Giải pháp**: 
+    1. Lấy Vercel URL (ví dụ: `https://chatbox-frontend.vercel.app`)
+    2. Vào Render Dashboard → Environment Variables
+    3. Update `CORS_ORIGIN` = Vercel URL
+    4. Update `FRONTEND_URL` = Vercel URL
+    5. Update `SOCKET_CORS_ORIGIN` = Vercel URL
+    6. Redeploy backend
 
 ### Socket.io không kết nối
-- Kiểm tra `REACT_APP_SOCKET_URL` đúng
-- Backend phải enable CORS cho Socket.io
-- Kiểm tra firewall/network rules
+- **Vấn đề**: Socket.io connection failed
+- **Giải pháp**: 
+  - Kiểm tra `REACT_APP_SOCKET_URL` đúng (không có `/api`)
+  - Backend phải enable CORS cho Socket.io
+  - Kiểm tra WebSocket support trên Render (free plan có thể không support)
+
+### Common Issues
+
+#### Environment Variables không được load
+- **Giải pháp**: 
+  - Render: Environment variables phải set trong Dashboard, không dùng file `.env`
+  - Vercel: Environment variables phải set trong Dashboard, không dùng file `.env`
+  - Redeploy sau khi thêm/update environment variables
+
+#### Build works local nhưng fails trên cloud
+- **Giải pháp**: 
+  - Kiểm tra Node version (Render/Vercel có thể dùng version khác)
+  - Kiểm tra dependencies trong `package.json`
+  - Xem build logs chi tiết trên platform
 
 ## 📚 Tài liệu tham khảo
 
