@@ -27,7 +27,7 @@ export class GoogleAIService {
   constructor(private configService: ConfigService) {
     const apiKey = this.configService.get<string>('GOOGLE_AI_API_KEY');
     if (!apiKey) {
-      throw new Error('GOOGLE_AI_API_KEY is not configured');
+      throw new Error('GOOGLE_AI_API_KEY chưa được cấu hình');
     }
 
     // Use broadly supported models on v1beta
@@ -95,7 +95,7 @@ export class GoogleAIService {
     } catch (error) {
       this.logger.error('Error generating text response:', error);
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Google AI text generation failed: ${message}`);
+      throw new Error(`Tạo phản hồi văn bản từ Google AI thất bại: ${message}`);
     }
   }
 
@@ -142,7 +142,7 @@ export class GoogleAIService {
     } catch (error) {
       this.logger.error('Error generating multimodal response:', error);
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Google AI multimodal generation failed: ${message}`);
+      throw new Error(`Tạo phản hồi đa phương tiện từ Google AI thất bại: ${message}`);
     }
   }
 
@@ -163,7 +163,7 @@ export class GoogleAIService {
   async fetchImageUrlToPart(url: string, mimeType?: string): Promise<Part> {
     const res = await fetch(url);
     if (!res.ok) {
-      throw new Error(`Failed to fetch image: ${res.status} ${res.statusText}`);
+      throw new Error(`Không thể tải ảnh: ${res.status} ${res.statusText}`);
     }
     const arrayBuf = await res.arrayBuffer();
     const base64 = Buffer.from(new Uint8Array(arrayBuf)).toString('base64');

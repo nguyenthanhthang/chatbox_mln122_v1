@@ -21,7 +21,7 @@ export class UsersService {
     const existingUser = await this.userModel.findOne({ email });
 
     if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+      throw new ConflictException('Email này đã được sử dụng');
     }
 
     // Hash password
@@ -42,7 +42,7 @@ export class UsersService {
   async findById(id: string): Promise<User> {
     const user = await this.userModel.findById(id).select('-password').exec();
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Không tìm thấy người dùng');
     }
     return user;
   }
@@ -50,7 +50,7 @@ export class UsersService {
   async findByEmail(email: string): Promise<User> {
     const user = await this.userModel.findOne({ email }).exec();
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Không tìm thấy người dùng');
     }
     return user;
   }
@@ -58,7 +58,7 @@ export class UsersService {
   async findByUsername(username: string): Promise<User> {
     const user = await this.userModel.findOne({ username }).exec();
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Không tìm thấy người dùng');
     }
     return user;
   }
@@ -70,7 +70,7 @@ export class UsersService {
       .exec();
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Không tìm thấy người dùng');
     }
 
     return user;
@@ -82,7 +82,7 @@ export class UsersService {
       .exec();
 
     if (!result) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Không tìm thấy người dùng');
     }
   }
 
@@ -109,7 +109,7 @@ export class UsersService {
   async findByRefreshToken(refreshToken: string): Promise<User> {
     const user = await this.userModel.findOne({ refreshToken }).exec();
     if (!user) {
-      throw new NotFoundException('Invalid refresh token');
+      throw new NotFoundException('Refresh token không hợp lệ');
     }
     return user;
   }

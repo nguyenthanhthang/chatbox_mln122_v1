@@ -59,7 +59,7 @@ MessageSchema.pre('validate', function (next) {
     typeof this.content === 'string' && this.content.trim().length > 0;
   const hasImages = Array.isArray(this.images) && this.images.length > 0;
   if (!hasText && !hasImages) {
-    return next(new Error('Either content or images is required.'));
+    return next(new Error('Cần có nội dung hoặc ảnh.'));
   }
   next();
 });

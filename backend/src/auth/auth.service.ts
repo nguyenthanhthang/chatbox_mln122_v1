@@ -37,7 +37,7 @@ export class AuthService {
       if (error instanceof ConflictException) {
         throw error;
       }
-      throw new BadRequestException('Registration failed');
+      throw new BadRequestException('Đăng ký thất bại');
     }
   }
 
@@ -45,7 +45,7 @@ export class AuthService {
     const user = await this.usersService.findByEmail(loginDto.email);
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
+      throw new UnauthorizedException('Tài khoản đã bị vô hiệu hóa');
     }
 
     const isPasswordValid = await this.usersService.validatePassword(
@@ -54,7 +54,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
     }
 
     // Update last login
@@ -92,7 +92,7 @@ export class AuthService {
 
       const user = await this.usersService.findById(payload.sub);
       if (!user || user.refreshToken !== refreshToken) {
-        throw new UnauthorizedException('Invalid refresh token');
+        throw new UnauthorizedException('Refresh token không hợp lệ');
       }
 
       const newPayload = { email: user.email, sub: payload.sub };

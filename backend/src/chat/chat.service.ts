@@ -34,7 +34,7 @@ export class ChatService {
 
   private ensureValidObjectId(id: string, fieldName = 'id') {
     if (!id || !Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(`Invalid ${fieldName}`);
+      throw new BadRequestException(`${fieldName} không hợp lệ`);
     }
   }
 
@@ -45,7 +45,7 @@ export class ChatService {
   ): Promise<ChatSession> {
     const session = new this.chatSessionModel({
       userId: new Types.ObjectId(userId),
-      title: createSessionDto.title || 'New Chat',
+      title: createSessionDto.title || 'Cuộc trò chuyện mới',
       aiModel: createSessionDto.model || 'gemini-1.0-pro',
     });
 
@@ -88,7 +88,7 @@ export class ChatService {
       .exec();
 
     if (!session) {
-      throw new NotFoundException('Chat session not found or access denied');
+      throw new NotFoundException('Không tìm thấy cuộc trò chuyện hoặc không có quyền truy cập');
     }
 
     return session;
@@ -103,7 +103,7 @@ export class ChatService {
     });
 
     if (!session) {
-      throw new NotFoundException('Chat session not found or access denied');
+      throw new NotFoundException('Không tìm thấy cuộc trò chuyện hoặc không có quyền truy cập');
     }
 
     session.isActive = false;
@@ -243,7 +243,7 @@ export class ChatService {
       });
 
       throw new BadRequestException(
-        'Failed to generate AI response: ' + error.message,
+        'Không thể tạo phản hồi từ AI: ' + error.message,
       );
     }
   }
@@ -370,6 +370,6 @@ export class ChatService {
     }
 
     // Add other formats (CSV, PDF) as needed
-    throw new BadRequestException('Unsupported export format');
+    throw new BadRequestException('Định dạng xuất không được hỗ trợ');
   }
 }

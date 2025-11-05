@@ -42,7 +42,7 @@ export class AIService {
     _model: string,
   ): never {
     // Google AI doesn't support streaming in this implementation
-    throw new Error(`Streaming not supported for model: ${_model}`);
+    throw new Error(`Mô hình ${_model} không hỗ trợ streaming`);
   }
 
   getAvailableModels(): AIModel[] {
