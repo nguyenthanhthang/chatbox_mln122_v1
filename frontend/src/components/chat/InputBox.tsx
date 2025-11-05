@@ -10,13 +10,11 @@ interface InputBoxProps {
 const InputBox: React.FC<InputBoxProps> = ({
   onSendMessage,
   disabled = false,
-  placeholder = "Type your message here...",
+  placeholder = "Nhập câu hỏi của bạn...",
   autoFocus = false,
 }) => {
   const [message, setMessage] = useState("");
-  const [images, setImages] = useState<
-    { url?: string; base64?: string; mimeType: string }[]
-  >([]);
+  const [images, setImages] = useState<{ url?: string; base64?: string; mimeType: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,15 +34,11 @@ const InputBox: React.FC<InputBoxProps> = ({
     setMessage("");
     setImages([]);
 
-    // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
 
-    await onSendMessage(
-      messageToSend,
-      imagesToSend.length > 0 ? imagesToSend : undefined
-    );
+    await onSendMessage(messageToSend, imagesToSend.length > 0 ? imagesToSend : undefined);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -62,9 +56,7 @@ const InputBox: React.FC<InputBoxProps> = ({
     }
   };
 
-  const handleImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
@@ -72,21 +64,15 @@ const InputBox: React.FC<InputBoxProps> = ({
     try {
       for (const file of Array.from(files)) {
         if (file.size > 10 * 1024 * 1024) {
-          alert("File size must be less than 10MB");
+          alert("File phải nhỏ hơn 10MB");
           continue;
         }
-        // upload to backend -> cloudinary
-        const uploaded = await (
-          await import("../../services/chat.service")
-        ).chatService.uploadImage(file);
-        setImages((prev) => [
-          ...prev,
-          { url: (uploaded as any).url, mimeType: uploaded.mimeType },
-        ]);
+        const uploaded = await (await import("../../services/chat.service")).chatService.uploadImage(file);
+        setImages((prev) => [...prev, { url: (uploaded as any).url, mimeType: uploaded.mimeType }]);
       }
     } catch (error) {
       console.error("Error uploading image:", error);
-      alert("Error uploading image");
+      alert("Lỗi khi tải ảnh lên");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -100,25 +86,25 @@ const InputBox: React.FC<InputBoxProps> = ({
   };
 
   return (
-    <div className="relative">
+    <div className="relative animate-slide-up">
       {/* Image previews */}
       {images.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap gap-3">
           {images.map((image, index) => (
-            <div key={index} className="relative">
+            <div key={index} className="relative group animate-scale-in">
               <img
                 src={image.url || image.base64 || ""}
                 alt={`Upload ${index + 1}`}
-                className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                className="w-20 h-20 object-cover rounded-2xl border-2 border-gray-200 shadow-lg group-hover:shadow-xl transition-all"
               />
               {isUploading && (
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-white text-xs rounded-lg">
-                  Uploading...
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs rounded-2xl backdrop-blur-sm">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 </div>
               )}
               <button
                 onClick={() => removeImage(index)}
-                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
+                className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-full flex items-center justify-center text-lg hover:scale-110 transition-transform shadow-lg"
               >
                 ×
               </button>
@@ -127,85 +113,93 @@ const InputBox: React.FC<InputBoxProps> = ({
         </div>
       )}
 
-      <div className="flex items-end space-x-3 bg-card border border-token rounded-2xl p-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 shadow-lg">
-        {/* Image upload button */}
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled || isUploading}
-          className="flex-shrink-0 p-2 rounded-lg text-blue-600 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {isUploading ? (
-            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-          )}
-        </button>
+      <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-gray-200/50 hover:border-red-300 focus-within:border-red-500 focus-within:ring-4 focus-within:ring-red-100 transition-all overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-yellow-500/5 pointer-events-none"></div>
+        
+        <div className="relative flex items-end space-x-3 p-4">
+          {/* Image upload button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled || isUploading}
+            className="flex-shrink-0 p-3 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 hover:from-red-100 hover:to-yellow-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-110 group"
+          >
+            {isUploading ? (
+              <div className="w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg className="w-6 h-6 text-gray-600 group-hover:text-red-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            )}
+          </button>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={handleImageUpload}
-          className="hidden"
-        />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageUpload}
+            className="hidden"
+          />
 
-        <textarea
-          ref={textareaRef}
-          value={message}
-          onChange={(e) => {
-            setMessage(e.target.value);
-            handleInput();
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder={
-            placeholder || "Type your question… Shift+Enter for new line"
-          }
-          disabled={disabled}
-          className="flex-1 resize-none border-none outline-none text-gray-800 placeholder-gray-500 max-h-48 min-h-[24px]"
-          rows={1}
-        />
-        <button
-          onClick={handleSubmit}
-          disabled={(!message.trim() && images.length === 0) || disabled}
-          className="flex-shrink-0 p-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors shadow-md"
-        >
-          {disabled ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              />
-            </svg>
-          )}
-        </button>
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              handleInput();
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled}
+            className="flex-1 resize-none border-none outline-none bg-transparent text-gray-800 placeholder-gray-400 max-h-48 min-h-[28px] text-base"
+            rows={1}
+          />
+          
+          <button
+            onClick={handleSubmit}
+            disabled={(!message.trim() && images.length === 0) || disabled}
+            className="flex-shrink-0 p-3 rounded-2xl bg-gradient-to-r from-red-500 to-yellow-500 text-white hover:from-red-600 hover:to-yellow-600 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl hover:scale-110 group relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            {disabled ? (
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin relative z-10" />
+            ) : (
+              <svg className="w-6 h-6 relative z-10 group-hover:rotate-45 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Helper text */}
-      <div className="text-xs text-gray-500 mt-2 text-center">
-        Press Enter to send, Shift+Enter for new line • Click 📷 to add images
+      <div className="flex items-center justify-center space-x-4 text-xs text-gray-500 mt-3">
+        <span className="flex items-center space-x-1">
+          <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-mono">Enter</kbd>
+          <span>để gửi</span>
+        </span>
+        <span className="flex items-center space-x-1">
+          <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-mono">Shift + Enter</kbd>
+          <span>để xuống dòng</span>
+        </span>
       </div>
+
+      <style>{`
+        @keyframes scale-in {
+          from {
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        .animate-scale-in {
+          animation: scale-in 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };

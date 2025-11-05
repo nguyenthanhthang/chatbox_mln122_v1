@@ -23,15 +23,16 @@ const Header: React.FC<HeaderProps> = ({
 
   if (variant === "iconOnly") {
     return (
-      <div className="absolute top-3 right-3 z-50">
+      <div className="absolute top-6 right-6 z-50 animate-fade-in">
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center justify-center w-11 h-11 rounded-full bg-red-600 text-white shadow-lg ring-2 ring-white/60 hover:brightness-110 transition-transform duration-150 hover:scale-[1.03]"
+            className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-yellow-500 text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
             title={user?.firstName || "Profile"}
           >
+            <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-yellow-400 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity"></div>
             <svg
-              className="w-5 h-5"
+              className="w-6 h-6 relative z-10"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -46,31 +47,30 @@ const Header: React.FC<HeaderProps> = ({
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-              <div className="py-2">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">
-                    {user?.firstName} {user?.lastName}
-                  </p>
-                  <p
-                    className="text-xs text-gray-500 truncate max-w-full"
-                    title={user?.email || ""}
-                  >
-                    {user?.email}
-                  </p>
-                </div>
+            <div className="absolute right-0 mt-3 w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 z-50 animate-slide-down overflow-hidden">
+              <div className="p-4 bg-gradient-to-r from-red-500 to-yellow-500">
+                <p className="text-base font-semibold text-white">
+                  {user?.firstName} {user?.lastName}
+                </p>
+                <p className="text-sm text-white/90 truncate" title={user?.email || ""}>
+                  {user?.email}
+                </p>
+              </div>
 
+              <div className="py-2">
                 <button
                   onClick={() => {
                     setShowUserMenu(false);
                     setProfileOpen(true);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-yellow-50 transition-all flex items-center space-x-3"
                 >
-                  Profile Settings
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>Cài đặt tài khoản</span>
                 </button>
 
-                {/* Change Background and Reset buttons remain */}
                 <button
                   onClick={() => {
                     const input = document.createElement("input");
@@ -79,54 +79,47 @@ const Header: React.FC<HeaderProps> = ({
                     input.onchange = async (e: any) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      // validation same as below implementation
                       const allowed = ["image/jpeg", "image/png", "image/webp"];
                       const maxSize = 8 * 1024 * 1024;
-                      if (!allowed.includes(file.type) || file.size > maxSize)
-                        return;
+                      if (!allowed.includes(file.type) || file.size > maxSize) return;
                       try {
-                        const { chatService } = await import(
-                          "../../services/chat.service"
-                        );
+                        const { chatService } = await import("../../services/chat.service");
                         const uploaded = await chatService.uploadImage(file);
-                        const url =
-                          (uploaded as any).secureUrl || (uploaded as any).url;
+                        const url = (uploaded as any).secureUrl || (uploaded as any).url;
                         if (url) {
                           try {
-                            const api = (await import("../../services/api"))
-                              .apiService;
-                            const res = await api.updateProfile({
-                              backgroundUrl: url,
-                            });
-                            const { setUser } = await import(
-                              "../../utils/helpers"
-                            );
+                            const api = (await import("../../services/api")).apiService;
+                            const res = await api.updateProfile({ backgroundUrl: url });
+                            const { setUser } = await import("../../utils/helpers");
                             setUser(res.data);
                           } catch {}
                           localStorage.setItem("bgUrl", url);
-                          document.documentElement.style.setProperty(
-                            "--poster-image",
-                            `url("${url}")`
-                          );
+                          document.documentElement.style.setProperty("--poster-image", `url("${url}")`);
                         }
                       } catch {}
                     };
                     input.click();
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-yellow-50 transition-all flex items-center space-x-3"
                 >
-                  Change Background
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span>Đổi hình nền</span>
                 </button>
 
-                <div className="border-t border-gray-100">
+                <div className="border-t border-gray-100 mt-2">
                   <button
                     onClick={() => {
                       setShowUserMenu(false);
                       onLogout();
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-all flex items-center space-x-3"
                   >
-                    Sign Out
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Đăng xuất</span>
                   </button>
                 </div>
               </div>
@@ -134,274 +127,12 @@ const Header: React.FC<HeaderProps> = ({
           )}
         </div>
 
-        <ProfileModal
-          open={profileOpen}
-          onClose={() => setProfileOpen(false)}
-        />
+        <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
       </div>
     );
   }
 
-  return (
-    <header className="bg-gradient-to-r from-red-700 to-red-800 text-white border-b border-red-300 px-4 py-3 shadow-lg">
-      <div className="flex items-center justify-between">
-        {/* Left side */}
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-lg hover:bg-blue-500"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
-
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-white rounded-full overflow-hidden flex items-center justify-center">
-              {user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt="avatar"
-                  className="w-8 h-8 object-cover"
-                />
-              ) : (
-                <span className="text-blue-600 font-bold text-sm">AI</span>
-              )}
-            </div>
-            <h1 className="text-xl font-semibold text-white font-serif-heading">
-              MLN_AI
-            </h1>
-            {/* Theme toggle removed by request */}
-          </div>
-        </div>
-
-        {/* Right side */}
-        <div className="flex items-center space-x-3">
-          {/* User Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-2 p-2 rounded-lg hover:bg-blue-500"
-            >
-              <div className="w-8 h-8 bg-white rounded-full overflow-hidden flex items-center justify-center">
-                {user?.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt="avatar"
-                    className="w-8 h-8 object-cover"
-                  />
-                ) : (
-                  <span className="text-blue-600 font-medium text-sm">
-                    {user?.firstName?.charAt(0) || "U"}
-                  </span>
-                )}
-              </div>
-              <span className="hidden sm:block text-sm font-medium text-white">
-                {user?.firstName || "User"}
-              </span>
-              <svg
-                className="w-4 h-4 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-
-            {/* Dropdown Menu */}
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                <div className="py-2">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">
-                      {user?.firstName} {user?.lastName}
-                    </p>
-                    <p
-                      className="text-xs text-gray-500 truncate max-w-full"
-                      title={user?.email || ""}
-                    >
-                      {user?.email}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      setProfileOpen(true);
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    Profile Settings
-                  </button>
-
-                  {/* Change Background */}
-                  <button
-                    onClick={() => {
-                      const input = document.createElement("input");
-                      input.type = "file";
-                      input.accept = "image/*";
-                      input.onchange = async (e: any) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        // Basic validation before upload
-                        const allowed = [
-                          "image/jpeg",
-                          "image/png",
-                          "image/webp",
-                        ];
-                        const maxSize = 8 * 1024 * 1024; // 8MB
-                        if (!allowed.includes(file.type)) {
-                          toast.error(
-                            "Unsupported image type. Use JPG/PNG/WebP."
-                          );
-                          return;
-                        }
-                        if (file.size > maxSize) {
-                          toast.error("Image is too large. Max 8MB.");
-                          return;
-                        }
-                        // Check dimensions >= 1200x700 for good cover quality
-                        const dimsOk = await new Promise<boolean>((resolve) => {
-                          const url = URL.createObjectURL(file);
-                          const img = new Image();
-                          img.onload = () => {
-                            const ok = img.width >= 1200 && img.height >= 700;
-                            URL.revokeObjectURL(url);
-                            resolve(ok);
-                          };
-                          img.onerror = () => {
-                            URL.revokeObjectURL(url);
-                            resolve(false);
-                          };
-                          img.src = url;
-                        });
-                        if (!dimsOk) {
-                          toast.error("Image too small. Minimum 1200×700.");
-                          return;
-                        }
-                        try {
-                          const { chatService } = await import(
-                            "../../services/chat.service"
-                          );
-                          const uploaded = await chatService.uploadImage(file);
-                          const url =
-                            (uploaded as any).secureUrl ||
-                            (uploaded as any).url;
-                          if (url) {
-                            // Persist per-user preference
-                            try {
-                              const res = await (
-                                await import("../../services/api")
-                              ).apiService.updateProfile({
-                                backgroundUrl: url,
-                              });
-                              const { setUser } = await import(
-                                "../../utils/helpers"
-                              );
-                              setUser(res.data);
-                            } catch {
-                              toast.warn("Saved locally. Will sync next time.");
-                            }
-                            localStorage.setItem("bgUrl", url); // fallback
-                            const apply = (u: string) => {
-                              document.documentElement.style.setProperty(
-                                "--poster-image",
-                                `url("${u}")`
-                              );
-                              document.body.style.setProperty(
-                                "--poster-image",
-                                `url("${u}")`
-                              );
-                              const el = document.querySelector(
-                                ".poster-bg"
-                              ) as HTMLElement | null;
-                              if (el) {
-                                el.style.setProperty(
-                                  "--poster-image",
-                                  `url("${u}")`
-                                );
-                              }
-                            };
-                            apply(url);
-                            toast.success("Background updated");
-                          }
-                        } catch (err) {
-                          console.error("Change background failed", err);
-                          toast.error("Failed to upload background");
-                        }
-                      };
-                      input.click();
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    Change Background
-                  </button>
-
-                  <div className="border-t border-gray-100">
-                    {/* Reset Background to gradient */}
-                    <button
-                      onClick={async () => {
-                        try {
-                          const api = (await import("../../services/api"))
-                            .apiService;
-                          await api.updateProfile({ backgroundUrl: null });
-                        } catch {}
-                        localStorage.removeItem("bgUrl");
-                        document.documentElement.style.removeProperty(
-                          "--poster-image"
-                        );
-                        const el = document.querySelector(
-                          ".poster-bg"
-                        ) as HTMLElement | null;
-                        if (el) el.style.removeProperty("--poster-image");
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      Use Default Background
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowUserMenu(false);
-                        onLogout();
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Click outside to close menu */}
-      {showUserMenu && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setShowUserMenu(false)}
-        />
-      )}
-      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
-    </header>
-  );
+  return null;
 };
 
 export default Header;
