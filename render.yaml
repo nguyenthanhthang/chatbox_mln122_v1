@@ -1,0 +1,59 @@
+services:
+  - type: web
+    name: chatbox-backend
+    env: node
+    plan: starter
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # PORT được Render tự động set, không cần set manual
+      - key: API_PREFIX
+        value: /api
+      # MongoDB Atlas - Set trong Render Dashboard
+      - key: MONGODB_URI
+        sync: false
+      - key: DB_NAME
+        value: ai-chatbot
+      # JWT Secrets - Set trong Render Dashboard
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 30d
+      # Google AI API - Set trong Render Dashboard
+      - key: GOOGLE_AI_API_KEY
+        sync: false
+      # CORS - Update với frontend URL sau khi deploy
+      - key: CORS_ORIGIN
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: SOCKET_CORS_ORIGIN
+        sync: false
+      # Cloudinary (Optional) - Set trong Render Dashboard
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      # Email (Optional)
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_FROM
+        value: noreply@chatbox.com
+      # File Upload
+      - key: MAX_FILE_SIZE
+        value: 10485760
+      - key: UPLOAD_PATH
+        value: ./uploads
+      - key: MAX_JSON_SIZE
+        value: 5mb
+

@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chatbox-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # MongoDB URI from .env file (MongoDB Atlas)
+      # MONGODB_URI: ${MONGODB_URI}
+      # DB_NAME: ${DB_NAME}
+      # Add other environment variables from .env file
+      # GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
+      # JWT_SECRET: ${JWT_SECRET}
+      # JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
+      SOCKET_CORS_ORIGIN: ${SOCKET_CORS_ORIGIN:-http://localhost:3001}
+    volumes:
+      - ./backend/uploads:/app/uploads
+    networks:
+      - chatbox-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: http://localhost:3000/api
+        REACT_APP_SOCKET_URL: http://localhost:3000
+    container_name: chatbox-frontend
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    networks:
+      - chatbox-network
+
+networks:
+  chatbox-network:
+    driver: bridge
+
