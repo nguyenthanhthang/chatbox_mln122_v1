@@ -84,10 +84,11 @@ const LoginForm: React.FC = () => {
       setError("");
       await login(data);
       toastSuccess("Đăng nhập thành công");
-      navigate("/dashboard");
+      navigate("/chat");
     } catch (err: any) {
-      setError(err.message);
-      toastError(err.message || "Đăng nhập thất bại");
+      const errorMessage = err.message || "Đăng nhập thất bại";
+      setError(errorMessage);
+      toastError(errorMessage);
     }
   };
 

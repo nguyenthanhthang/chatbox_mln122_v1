@@ -12,7 +12,7 @@ import {
   RegisterRequest,
 } from "../types/auth.types";
 import { authService } from "../services/auth.service";
-import { setTokens, setUser, removeTokens, getUser } from "../utils/helpers";
+import { setUser, removeTokens, getUser } from "../utils/helpers";
 
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined

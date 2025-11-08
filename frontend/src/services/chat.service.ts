@@ -35,6 +35,7 @@ export interface Message {
   tokens?: number;
   model?: string;
   sessionId?: string;
+  _id?: string; // Backend có thể trả về _id thay vì id (MongoDB)
 }
 
 export interface ChatSession {

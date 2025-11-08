@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import type { SignOptions } from 'jsonwebtoken';
 import { ChatService } from './chat.service';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './gateways/chat.gateway';
@@ -27,13 +28,15 @@ import { CloudinaryMonitorService } from '../common/services/cloudinary-monitor.
     AIModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '7d',
-        },
-      }),
       inject: [ConfigService],
+      useFactory: (configService: ConfigService): JwtModuleOptions => {
+        const expires = configService.get<string>('JWT_EXPIRES_IN') || '7d';
+        const signOptions: SignOptions = { expiresIn: expires as any };
+        return {
+          secret: configService.get<string>('JWT_SECRET'),
+          signOptions,
+        };
+      },
     }),
   ],
   controllers: [ChatController],

@@ -5,7 +5,6 @@ import MessageList from "./MessageList";
 import InputBox from "./InputBox";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import LoadingSpinner from "../common/LoadingSpinner";
 import { toastError } from "../../utils/toast";
 
 const ChatInterface: React.FC = () => {

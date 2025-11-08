@@ -4,8 +4,12 @@ import { AuthProvider, ChatProvider } from "./context";
 import { Login, Register, VerifyEmail, VerifyPhone } from "./pages/auth";
 import ChatInterface from "./components/chat/ChatInterface";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import { useAutoLogout } from "./hooks/useAutoLogout";
 
 const AppContent: React.FC = () => {
+  // Tự động logout sau 30 phút không có thao tác
+  useAutoLogout(30, 5);
+
   return (
     <Router>
       <Routes>

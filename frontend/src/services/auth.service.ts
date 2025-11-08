@@ -20,7 +20,29 @@ export class AuthService {
 
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Đăng nhập thất bại");
+      // Xử lý các loại lỗi khác nhau
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+
+      if (status === 401) {
+        // Unauthorized - Email hoặc mật khẩu sai, hoặc tài khoản bị vô hiệu hóa
+        throw new Error(message || "Email hoặc mật khẩu không đúng");
+      } else if (status === 404) {
+        // Not Found - Email không tồn tại
+        throw new Error("Email không tồn tại trong hệ thống");
+      } else if (status === 400) {
+        // Bad Request - Dữ liệu không hợp lệ
+        throw new Error(message || "Dữ liệu đăng nhập không hợp lệ");
+      } else if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
+        // Timeout
+        throw new Error("Kết nối quá thời gian. Vui lòng thử lại");
+      } else if (!error.response) {
+        // Network error
+        throw new Error("Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng");
+      } else {
+        // Other errors
+        throw new Error(message || "Đăng nhập thất bại. Vui lòng thử lại");
+      }
     }
   }
 

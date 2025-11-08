@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { toast } from "react-toastify";
 import { User } from "../../types/auth.types";
 import ProfileModal from "../auth/ProfileModal";
 import { apiService } from "../../services/api";

@@ -5,7 +5,6 @@ import React, {
   ReactNode,
   useCallback,
   useEffect,
-  useRef,
 } from "react";
 import { chatService } from "../services/chat.service";
 import { websocketService } from "../services/websocket.service";
