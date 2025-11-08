@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, ChatProvider } from "./context";
+import { AuthProvider, ChatProvider, ThemeProvider } from "./context";
 import { Login, Register, VerifyEmail, VerifyPhone } from "./pages/auth";
 import ChatInterface from "./components/chat/ChatInterface";
 import ProtectedRoute from "./components/common/ProtectedRoute";
@@ -34,11 +34,13 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <ChatProvider>
-        <AppContent />
-      </ChatProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <ChatProvider>
+          <AppContent />
+        </ChatProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

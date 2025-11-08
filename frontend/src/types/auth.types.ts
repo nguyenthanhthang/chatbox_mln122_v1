@@ -67,4 +67,5 @@ export interface AuthContextType {
   verifyEmail: (token: string) => Promise<void>;
   verifyPhone: (code: string) => Promise<void>;
   refreshToken: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }

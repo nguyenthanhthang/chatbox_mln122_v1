@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Modal, Input } from "../common";
 import { useAuth } from "../../hooks/useAuth";
 import { apiService } from "../../services/api";
@@ -31,13 +31,22 @@ interface ProfileModalProps {
 }
 
 const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
   const [avatar, setAvatar] = useState(user?.avatar || "");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update local state when user changes
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+      setAvatar(user.avatar || "");
+    }
+  }, [user]);
 
   const onSave = async () => {
     try {
@@ -48,8 +57,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
       }
       const res = await apiService.updateProfile(payload);
       setUser(res.data);
+      // Refresh AuthContext to update user state
+      await refreshUser();
       onClose();
-      window.location.reload();
     } catch (e: any) {
       const errorMessage = e?.response?.data?.message || e?.message || "Không thể cập nhật thông tin";
       toastError(errorMessage);
@@ -141,6 +151,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                       try {
                         const res = await apiService.updateProfile({ avatar: url });
                         setUser(res.data);
+                        // Update local avatar state immediately for preview
+                        setAvatar(url);
+                        // Refresh AuthContext to update user state everywhere
+                        await refreshUser();
                         toastSuccess("Cập nhật avatar thành công");
                       } catch (err: any) {
                         const errorMessage = err?.response?.data?.message || err?.message || "Không thể lưu avatar";
