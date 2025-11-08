@@ -1,6 +1,7 @@
 import React, { useState, useRef, KeyboardEvent } from "react";
 import { toastError, toastWarn, toastSuccess } from "../../utils/toast";
 import { compressImage, createImagePreview, needsCompression } from "../../utils/image-compressor";
+import { chatService } from "../../services/chat.service";
 
 interface InputBoxProps {
   onSendMessage: (message: string, images?: any[]) => void;
@@ -115,7 +116,7 @@ const InputBox: React.FC<InputBoxProps> = ({
           setUploadProgress((prev) => ({ ...prev, [currentIndex]: 0 }));
           
           // Upload compressed file (nhỏ hơn → upload nhanh hơn)
-          const uploaded = await (await import("../../services/chat.service")).chatService.uploadImage(
+          const uploaded = await chatService.uploadImage(
             fileToUpload,
             (progress) => {
               setUploadProgress((prev) => ({ ...prev, [currentIndex]: progress }));

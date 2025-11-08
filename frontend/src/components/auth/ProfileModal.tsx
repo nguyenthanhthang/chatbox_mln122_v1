@@ -4,6 +4,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { apiService } from "../../services/api";
 import { setUser } from "../../utils/helpers";
 import { chatService } from "../../services/chat.service";
+import { toastError, toastWarn, toastSuccess } from "../../utils/toast";
 
 // Import icons as unknown then cast → avoids TS 5.5 JSX error
 import {
@@ -51,7 +52,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
       window.location.reload();
     } catch (e: any) {
       const errorMessage = e?.response?.data?.message || e?.message || "Không thể cập nhật thông tin";
-      (await import("../../utils/toast")).toastError(errorMessage);
+      toastError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -104,20 +105,20 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
 
                     // Validate file size
                     if (f.size > 5 * 1024 * 1024) {
-                      (await import("../../utils/toast")).toastWarn("File phải nhỏ hơn 5MB");
+                      toastWarn("File phải nhỏ hơn 5MB");
                       if (fileInputRef.current) fileInputRef.current.value = "";
                       return;
                     }
 
                     // Validate file type
                     if (!f.type.startsWith("image/")) {
-                      (await import("../../utils/toast")).toastWarn("Chỉ chấp nhận file ảnh");
+                      toastWarn("Chỉ chấp nhận file ảnh");
                       if (fileInputRef.current) fileInputRef.current.value = "";
                       return;
                     }
 
                     if (f.type === "image/svg+xml") {
-                      (await import("../../utils/toast")).toastWarn("SVG files không được hỗ trợ. Vui lòng sử dụng PNG, JPG hoặc WebP.");
+                      toastWarn("SVG files không được hỗ trợ. Vui lòng sử dụng PNG, JPG hoặc WebP.");
                       if (fileInputRef.current) fileInputRef.current.value = "";
                       return;
                     }
@@ -130,20 +131,20 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                       const url = uploaded?.url;
                       
                       if (!url || !/^https?:\/\//i.test(url)) {
-                        (await import("../../utils/toast")).toastError("Không nhận được URL ảnh từ server");
+                        toastError("Không nhận được URL ảnh từ server");
                         return;
                       }
 
                       setAvatar(url);
-                      (await import("../../utils/toast")).toastSuccess("Tải ảnh lên thành công");
+                      toastSuccess("Tải ảnh lên thành công");
                       
                       try {
                         const res = await apiService.updateProfile({ avatar: url });
                         setUser(res.data);
-                        (await import("../../utils/toast")).toastSuccess("Cập nhật avatar thành công");
+                        toastSuccess("Cập nhật avatar thành công");
                       } catch (err: any) {
                         const errorMessage = err?.response?.data?.message || err?.message || "Không thể lưu avatar";
-                        (await import("../../utils/toast")).toastError(errorMessage);
+                        toastError(errorMessage);
                       }
                     } catch (uploadError: any) {
                       console.error("Upload error:", uploadError);
@@ -151,7 +152,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
                         uploadError?.response?.data?.message || 
                         uploadError?.message || 
                         "Lỗi khi tải ảnh lên";
-                      (await import("../../utils/toast")).toastError(errorMessage);
+                      toastError(errorMessage);
                     } finally {
                       setUploading(false);
                       if (fileInputRef.current) fileInputRef.current.value = "";

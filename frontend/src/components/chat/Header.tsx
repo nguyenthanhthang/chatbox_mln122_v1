@@ -2,6 +2,10 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { User } from "../../types/auth.types";
 import ProfileModal from "../auth/ProfileModal";
+import { apiService } from "../../services/api";
+import { setUser } from "../../utils/helpers";
+import { toastSuccess, toastError } from "../../utils/toast";
+import { chatService } from "../../services/chat.service";
 
 interface HeaderProps {
   user: User | null;
@@ -83,26 +87,23 @@ const Header: React.FC<HeaderProps> = ({
                       const maxSize = 8 * 1024 * 1024;
                       if (!allowed.includes(file.type) || file.size > maxSize) return;
                       try {
-                        const { chatService } = await import("../../services/chat.service");
                         const uploaded = await chatService.uploadImage(file);
-                        const url = (uploaded as any).secureUrl || (uploaded as any).url;
+                        const url = uploaded?.url;
                         if (url) {
                           try {
-                            const api = (await import("../../services/api")).apiService;
-                            const res = await api.updateProfile({ backgroundUrl: url });
-                            const { setUser } = await import("../../utils/helpers");
+                            const res = await apiService.updateProfile({ backgroundUrl: url });
                             setUser(res.data);
-                            (await import("../../utils/toast")).toastSuccess("Cập nhật ảnh nền thành công");
+                            toastSuccess("Cập nhật ảnh nền thành công");
                           } catch (err: any) {
                             const errorMessage = err?.response?.data?.message || err?.message || "Không thể cập nhật ảnh nền";
-                            (await import("../../utils/toast")).toastError(errorMessage);
+                            toastError(errorMessage);
                           }
                           localStorage.setItem("bgUrl", url);
                           document.documentElement.style.setProperty("--poster-image", `url("${url}")`);
                         }
                       } catch (err: any) {
                         const errorMessage = err?.response?.data?.message || err?.message || "Không thể tải ảnh lên";
-                        (await import("../../utils/toast")).toastError(errorMessage);
+                        toastError(errorMessage);
                       }
                     };
                     input.click();
