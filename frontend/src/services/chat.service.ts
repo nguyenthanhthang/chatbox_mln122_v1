@@ -1,4 +1,5 @@
 import { apiService } from "./api";
+import { ImageMetadata } from "../types/image.types";
 
 export interface SendMessageRequest {
   message: string;
@@ -7,7 +8,7 @@ export interface SendMessageRequest {
   maxTokens?: number;
   temperature?: number;
   systemPrompt?: string;
-  images?: any[];
+  images?: ImageMetadata[];
 }
 
 export interface CreateSessionRequest {

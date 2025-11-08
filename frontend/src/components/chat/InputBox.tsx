@@ -2,9 +2,10 @@ import React, { useState, useRef, KeyboardEvent } from "react";
 import { toastError, toastWarn, toastSuccess } from "../../utils/toast";
 import { compressImage, createImagePreview, needsCompression } from "../../utils/image-compressor";
 import { chatService } from "../../services/chat.service";
+import { ImageMetadata } from "../../types/image.types";
 
 interface InputBoxProps {
-  onSendMessage: (message: string, images?: any[]) => void;
+  onSendMessage: (message: string, images?: ImageMetadata[]) => void;
   disabled?: boolean;
   placeholder?: string;
   autoFocus?: boolean;
@@ -19,7 +20,7 @@ const InputBox: React.FC<InputBoxProps> = ({
   const [message, setMessage] = useState("");
   const [images, setImages] = useState<{ 
     url?: string; 
-    base64?: string; 
+    base64?: string | null; 
     publicId?: string; // Cloudinary public_id (ưu tiên)
     mimeType: string;
     width?: number;
@@ -102,7 +103,9 @@ const InputBox: React.FC<InputBoxProps> = ({
           
           // Tối ưu: Hiển thị preview ngay lập tức (base64) - không cần đợi upload
           preview = await createImagePreview(file);
-          setImages((prev) => [...prev, { base64: preview, mimeType: file.type }]);
+          if (preview) {
+            setImages((prev) => [...prev, { base64: preview, mimeType: file.type }]);
+          }
           
           // Client-side compression trước khi upload (nếu file > 1MB)
           // Tối ưu: giảm xuống 1280px để upload nhanh hơn (theo yêu cầu)
@@ -140,21 +143,23 @@ const InputBox: React.FC<InputBoxProps> = ({
           
           if (uploaded && (uploaded.url || uploaded.publicId)) {
             // Replace base64 preview với Cloudinary metadata (ưu tiên publicId)
-            setImages((prev) => {
-              const updated = [...prev];
-              const index = updated.findIndex((img) => img.base64 === preview);
-              if (index !== -1) {
-                updated[index] = {
-                  url: uploaded.url, // Giữ để hiển thị preview
-                  publicId: uploaded.publicId, // Gửi publicId lên BE (tối ưu hơn)
-                  mimeType: uploaded.mimeType,
-                  width: uploaded.width,
-                  height: uploaded.height,
-                  format: uploaded.format,
-                };
-              }
-              return updated;
-            });
+            if (preview) {
+              setImages((prev) => {
+                const updated = [...prev];
+                const index = updated.findIndex((img) => img.base64 === preview);
+                if (index !== -1) {
+                  updated[index] = {
+                    url: uploaded.url, // Giữ để hiển thị preview
+                    publicId: uploaded.publicId, // Gửi publicId lên BE (tối ưu hơn)
+                    mimeType: uploaded.mimeType,
+                    width: uploaded.width,
+                    height: uploaded.height,
+                    format: uploaded.format,
+                  };
+                }
+                return updated;
+              });
+            }
             toastSuccess("Tải ảnh lên thành công");
             return uploaded;
           } else {

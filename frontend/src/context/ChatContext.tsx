@@ -10,6 +10,7 @@ import React, {
 import { chatService } from "../services/chat.service";
 import { websocketService } from "../services/websocket.service";
 import { toastError, toastSuccess } from "../utils/toast";
+import { ImageMetadata } from "../types/image.types";
 
 export interface Message {
   id: string;
@@ -18,7 +19,8 @@ export interface Message {
   timestamp: string;
   tokens?: number;
   model?: string;
-  images?: any[];
+  images?: ImageMetadata[];
+  _id?: string; // Backend có thể trả về _id thay vì id
 }
 
 export interface ChatSession {
@@ -64,7 +66,7 @@ interface ChatContextType {
   sendMessage: (
     content: string,
     model?: string,
-    images?: any[]
+    images?: ImageMetadata[]
   ) => Promise<void>;
   clearCurrentSession: () => Promise<void>;
   clearAllHistory: () => Promise<void>;
@@ -275,7 +277,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   // Send message
   const sendMessage = useCallback(
-    async (content: string, model?: string, images?: any[]) => {
+    async (content: string, model?: string, images?: ImageMetadata[]) => {
       if (!content.trim() && (!images || images.length === 0)) return;
 
       try {
