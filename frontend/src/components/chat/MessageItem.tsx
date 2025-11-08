@@ -69,7 +69,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
                     <img
                       key={index}
                       src={src}
-                      alt={`Image ${index + 1}`}
+                      alt={`Upload ${index + 1}`}
                       className="max-w-sm max-h-64 object-contain rounded-2xl border-2 border-white/50 shadow-lg hover:scale-105 transition-transform cursor-pointer"
                     />
                   );

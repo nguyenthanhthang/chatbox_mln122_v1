@@ -1,9 +1,6 @@
 export const API_BASE_URL =
   process.env.REACT_APP_API_URL || "https://chatbox-mln122-v1.onrender.com/api";
 
-export const SOCKET_URL =
-  process.env.REACT_APP_SOCKET_URL || "https://chatbox-mln122-v1.onrender.com";
-
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: "accessToken",
   REFRESH_TOKEN: "refreshToken",

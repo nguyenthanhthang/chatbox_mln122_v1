@@ -4,8 +4,6 @@ import {
   RegisterRequest,
   AuthResponse,
   User,
-  VerifyEmailRequest,
-  VerifyPhoneRequest,
 } from "../types/auth.types";
 import { setTokens, setUser, removeTokens } from "../utils/helpers";
 

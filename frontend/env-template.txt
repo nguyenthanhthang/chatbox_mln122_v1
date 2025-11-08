@@ -1,0 +1,20 @@
+# ============================================
+# Frontend Environment Variables Template
+# ============================================
+# Copy nội dung này vào file .env.local (cho local development)
+# Hoặc import vào Vercel Environment Variables (cho production)
+# ============================================
+
+# Backend API URL
+# Production: https://chatbox-mln122-v1.onrender.com/api
+# Local: http://localhost:3000/api
+REACT_APP_API_URL=https://chatbox-mln122-v1.onrender.com/api
+
+# ============================================
+# Lưu ý:
+# ============================================
+# - Tất cả biến môi trường React phải bắt đầu bằng REACT_APP_
+# - Sau khi thay đổi, cần restart dev server (npm start)
+# - Trên Vercel, thêm vào Settings → Environment Variables
+# - Chọn tất cả environments: Production, Preview, Development
+

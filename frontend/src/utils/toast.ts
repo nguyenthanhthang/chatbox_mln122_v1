@@ -22,9 +22,11 @@ export const toastInfo = (message: string, options?: ToastOptions) =>
 export const toastWarn = (message: string, options?: ToastOptions) =>
   toast.warn(message, { ...defaultOptions, ...options });
 
-export default {
+const toastUtils = {
   success: toastSuccess,
   error: toastError,
   info: toastInfo,
   warn: toastWarn,
 };
+
+export default toastUtils;

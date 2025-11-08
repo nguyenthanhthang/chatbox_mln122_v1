@@ -6,8 +6,6 @@ import React, {
   useCallback,
 } from "react";
 import { chatService } from "../services/chat.service";
-// WebSocket disabled - using HTTP fallback only
-// import { websocketService } from "../services/websocket.service";
 import { toastError, toastSuccess } from "../utils/toast";
 import { ImageMetadata } from "../types/image.types";
 
@@ -47,7 +45,7 @@ interface ChatContextType {
   currentSession: ChatSession | null;
   messages: Message[];
   isLoading: boolean;
-  isStreaming: boolean; // Always false - WebSocket disabled
+  isStreaming: boolean;
 
   // Sessions
   sessions: ChatSession[];
@@ -90,20 +88,12 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   );
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  // WebSocket disabled - isStreaming no longer needed
-  // const [isStreaming, setIsStreaming] = useState(false);
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
 
   const [aiSettings, setAISettings] = useState<AISettings | null>(null);
   const [availableModels, setAvailableModels] = useState<any[]>([]);
-
-  // WebSocket integration DISABLED - using HTTP fallback only
-  // useEffect(() => {
-  //   websocketService.connect();
-  //   ...
-  // }, [currentSession?.id]);
 
   // Load sessions - defined first to avoid "used before defined" errors
   const loadSessions = useCallback(async () => {
@@ -266,7 +256,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           },
         ]);
 
-        // Send to AI (HTTP only - WebSocket disabled)
+        // Send to AI
         const response = await chatService.sendMessage({
           message: content,
           sessionId: sessionIdForSend,
@@ -425,7 +415,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     currentSession,
     messages,
     isLoading,
-    isStreaming: false, // WebSocket disabled
+    isStreaming: false,
     sessions,
     sessionsLoading,
     loadSessions,

@@ -1,0 +1,21 @@
+# ============================================
+# Vercel Environment Variables
+# ============================================
+# Copy các dòng dưới đây và paste vào Vercel Dashboard
+# Settings → Environment Variables
+# ============================================
+
+REACT_APP_API_URL=https://chatbox-mln122-v1.onrender.com/api
+
+# ============================================
+# Hướng dẫn:
+# ============================================
+# 1. Vào Vercel Dashboard → Project → Settings → Environment Variables
+# 2. Click "Add New"
+# 3. Thêm biến:
+#    - Key: REACT_APP_API_URL
+#      Value: https://chatbox-mln122-v1.onrender.com/api
+#      Environment: Production, Preview, Development (chọn tất cả)
+# 4. Click "Save"
+# 5. Redeploy project để áp dụng thay đổi
+

@@ -24,7 +24,6 @@ const ChatInterface: React.FC = () => {
   } = useChat();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isNewChat, setIsNewChat] = useState(false);
   const [focusInput, setFocusInput] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +38,6 @@ const ChatInterface: React.FC = () => {
   const handleNewChat = async () => {
     try {
       await createNewSession();
-      setIsNewChat(true);
       setFocusInput(true);
       setSidebarOpen(false);
     } catch (error: any) {
@@ -51,7 +49,6 @@ const ChatInterface: React.FC = () => {
   const handleLoadSession = async (sessionId: string) => {
     try {
       await loadSession(sessionId);
-      setIsNewChat(false);
       setSidebarOpen(false);
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || "Không thể tải cuộc trò chuyện";
@@ -91,7 +88,6 @@ const ChatInterface: React.FC = () => {
         .filter(Boolean);
 
       await sendMessage(content, undefined, imageData);
-      setIsNewChat(false);
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || "Không thể gửi tin nhắn";
       toastError(errorMessage);
