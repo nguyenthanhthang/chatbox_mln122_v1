@@ -130,16 +130,20 @@ const InputBox: React.FC<InputBoxProps> = ({
 
           // Tối ưu: Hiển thị preview ngay lập tức (base64) - không cần đợi upload
           preview = await createImagePreview(file);
-          // Chỉ set base64 khi preview không null (Cách 1 - an toàn)
+
+          // Chỉ set base64 khi preview không null (type-safe)
           // Gắn tempId để track progress riêng cho từng ảnh
-          setImages((prev) => [
-            ...prev,
-            {
-              ...(preview ? { base64: preview } : {}),
-              mimeType: file.type,
-              tempId: currentIndex, // Thêm tempId để track progress
-            },
-          ]);
+          const newImage: ImageMetadata = {
+            mimeType: file.type,
+            tempId: currentIndex, // Thêm tempId để track progress
+          };
+
+          // Chỉ thêm base64 nếu preview không null
+          if (preview) {
+            newImage.base64 = preview;
+          }
+
+          setImages((prev) => [...prev, newImage]);
 
           // Client-side compression trước khi upload (nếu file > 1MB)
           // Tối ưu: giảm xuống 1280px để upload nhanh hơn (theo yêu cầu)
