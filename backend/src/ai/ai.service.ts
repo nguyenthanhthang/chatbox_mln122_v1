@@ -122,21 +122,21 @@ export class AIService {
               ),
             );
           } else if (image.url) {
-            // Nếu là Cloudinary URL, optimize nó
-            if (image.url.includes('res.cloudinary.com')) {
-              parts.push(
-                this.googleAIService.convertCloudinaryUrlToPart(
-                  image.url,
-                  image.mimeType,
-                ),
-              );
-            } else {
-              const part = await this.googleAIService.fetchImageUrlToPart(
-                image.url,
-                image.mimeType,
-              );
-              parts.push(part);
-            }
+            // Download image from URL and convert to Base64 for Google AI
+            // Google AI requires Base64 data, not URLs
+            const optimizedUrl = image.url.includes('res.cloudinary.com')
+              ? // Optimize Cloudinary URL for smaller size
+                image.url.replace(
+                  '/upload/',
+                  '/upload/f_auto,q_auto,w_1024,h_1024,c_limit/',
+                )
+              : image.url;
+            
+            const part = await this.googleAIService.fetchImageUrlToPart(
+              optimizedUrl,
+              image.mimeType,
+            );
+            parts.push(part);
           }
         }
       }
