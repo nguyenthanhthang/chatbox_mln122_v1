@@ -19,9 +19,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Get theme from localStorage or default to light
     // Check if we're in browser environment
     if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("theme") as Theme | null;
+      const savedTheme = localStorage.getItem("theme");
       if (savedTheme === "light" || savedTheme === "dark") {
-        return savedTheme;
+        return savedTheme as Theme;
       }
     }
     return "light";
