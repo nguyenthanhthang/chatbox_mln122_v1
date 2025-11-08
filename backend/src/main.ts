@@ -19,6 +19,16 @@ async function bootstrap() {
   // Also allow any Vercel preview URL (for development)
   const isVercelPreview = (origin: string) => origin.includes('.vercel.app');
   
+  // Allow localhost for local development (any port)
+  const isLocalhost = (origin: string) => {
+    try {
+      const url = new URL(origin);
+      return url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+    } catch {
+      return false;
+    }
+  };
+  
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
@@ -26,6 +36,11 @@ async function bootstrap() {
       
       // Check if origin is in allowed list
       if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Allow localhost for local development (any port)
+      if (isLocalhost(origin)) {
         return callback(null, true);
       }
       

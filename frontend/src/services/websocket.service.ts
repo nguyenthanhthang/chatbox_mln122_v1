@@ -39,7 +39,7 @@ class WebSocketService {
    * Get WebSocket URL from environment or default
    */
   private getSocketUrl(): string {
-    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+    const apiUrl = process.env.REACT_APP_API_URL || 'https://chatbox-mln122-v1.onrender.com';
     // Remove /api suffix if present, add /chat namespace
     const baseUrl = apiUrl.replace(/\/api$/, '');
     return `${baseUrl}/chat`;
