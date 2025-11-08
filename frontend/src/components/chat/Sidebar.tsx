@@ -75,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 bottom-0 left-0 z-50 w-80 bg-white/95 backdrop-blur-xl shadow-2xl transform transition-all duration-500 ease-out lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-80 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl shadow-2xl transform transition-all duration-500 ease-out lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -106,7 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Tìm kiếm cuộc trò chuyện..."
-                className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 outline-none transition-all bg-white/80"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 focus:border-red-500 dark:focus:border-red-500 focus:ring-4 focus:ring-red-100 dark:focus:ring-red-900/50 outline-none transition-all bg-white/80 dark:bg-gray-700/80 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               />
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -126,7 +126,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                     filter === f.k
                       ? "bg-gradient-to-r from-red-500 to-yellow-500 text-white shadow-lg scale-105"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                   }`}
                 >
                   <span>{f.icon}</span>
@@ -170,8 +170,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             ) : filteredSessions.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-center animate-fade-in">
                 <div className="text-6xl mb-4">💬</div>
-                <p className="text-gray-600 font-medium">Chưa có cuộc trò chuyện</p>
-                <p className="text-sm text-gray-500 mt-1">Bắt đầu trò chuyện mới!</p>
+                <p className="text-gray-600 dark:text-gray-400 font-medium">Chưa có cuộc trò chuyện</p>
+                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">Bắt đầu trò chuyện mới!</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -180,8 +180,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                     key={session.id}
                     className={`group relative flex items-center space-x-3 p-4 rounded-2xl cursor-pointer transition-all duration-300 animate-slide-in ${
                       currentSession?.id === session.id
-                        ? "bg-gradient-to-r from-red-50 to-yellow-50 shadow-lg scale-105 border-2 border-red-200"
-                        : "hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md"
+                        ? "bg-gradient-to-r from-red-50 to-yellow-50 dark:from-red-900/30 dark:to-yellow-900/30 shadow-lg scale-105 border-2 border-red-200 dark:border-red-700"
+                        : "hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-600 hover:shadow-md"
                     }`}
                     style={{ animationDelay: `${index * 50}ms` }}
                     onClick={() => onLoadSession(session.id)}
@@ -199,8 +199,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{session.title}</p>
-                      <div className="flex items-center space-x-2 text-xs text-gray-600 mt-1">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{session.title}</p>
+                      <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-400 mt-1">
                         <span>{formatDate(session.lastMessageAt)}</span>
                         <span>•</span>
                         <span>{session.messageCount} tin nhắn</span>
@@ -243,10 +243,10 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Footer */}
           {currentSession && (
-            <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700">
               <button
                 onClick={onClearSession}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all font-medium"
+                className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all font-medium"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

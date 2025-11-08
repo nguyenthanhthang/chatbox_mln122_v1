@@ -34,12 +34,12 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
           <div className={`flex items-center space-x-2 mb-2 ${isUser ? "flex-row-reverse space-x-reverse" : ""}`}>
             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
               isUser
-                ? "bg-blue-100 text-blue-700"
-                : "bg-gradient-to-r from-red-100 to-yellow-100 text-red-700"
+                ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
+                : "bg-gradient-to-r from-red-100 to-yellow-100 dark:from-red-900/30 dark:to-yellow-900/30 text-red-700 dark:text-red-300"
             }`}>
               {roleLabel}
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-400 dark:text-gray-500">
               {new Date(message.timestamp).toLocaleTimeString()}
             </span>
           </div>
@@ -48,7 +48,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
             className={`relative px-6 py-4 rounded-3xl shadow-lg transition-all group-hover:shadow-xl ${
               isUser
                 ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white"
-                : "bg-white/90 backdrop-blur-sm text-gray-800 border-2 border-gray-100"
+                : "bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-gray-800 dark:text-gray-100 border-2 border-gray-100 dark:border-gray-700"
             }`}
           >
             {/* Decorative corner */}
@@ -95,14 +95,14 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
                               Copy
                             </button>
                           </div>
-                          <pre className="bg-gradient-to-br from-gray-900 to-gray-800 p-4 rounded-2xl overflow-x-auto shadow-inner">
+                          <pre className="bg-gradient-to-br from-gray-900 to-gray-800 dark:from-gray-950 dark:to-gray-900 p-4 rounded-2xl overflow-x-auto shadow-inner">
                             <code className={`${className} text-gray-100`} {...props}>
                               {children}
                             </code>
                           </pre>
                         </div>
                       ) : (
-                        <code className="bg-red-100 text-red-700 px-2 py-0.5 rounded-lg text-sm font-mono" {...props}>
+                        <code className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-lg text-sm font-mono" {...props}>
                           {children}
                         </code>
                       );
@@ -111,16 +111,16 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
                     ul: ({ children }) => <ul className="list-disc list-inside mb-3 space-y-1">{children}</ul>,
                     ol: ({ children }) => <ol className="list-decimal list-inside mb-3 space-y-1">{children}</ol>,
                     li: ({ children }) => <li className="mb-1">{children}</li>,
-                    h1: ({ children }) => <h1 className="text-2xl font-bold mb-3 text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-yellow-600">{children}</h1>,
-                    h2: ({ children }) => <h2 className="text-xl font-bold mb-3 text-gray-800">{children}</h2>,
-                    h3: ({ children }) => <h3 className="text-lg font-bold mb-2 text-gray-700">{children}</h3>,
+                    h1: ({ children }) => <h1 className="text-2xl font-bold mb-3 text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-yellow-600 dark:from-red-400 dark:to-yellow-400">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-xl font-bold mb-3 text-gray-800 dark:text-gray-200">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-lg font-bold mb-2 text-gray-700 dark:text-gray-300">{children}</h3>,
                     blockquote: ({ children }) => (
-                      <blockquote className="border-l-4 border-gradient-to-b from-red-500 to-yellow-500 pl-4 py-2 my-3 bg-gradient-to-r from-red-50 to-yellow-50 rounded-r-lg italic">
+                      <blockquote className="border-l-4 border-gradient-to-b from-red-500 to-yellow-500 pl-4 py-2 my-3 bg-gradient-to-r from-red-50 to-yellow-50 dark:from-red-900/20 dark:to-yellow-900/20 rounded-r-lg italic">
                         {children}
                       </blockquote>
                     ),
                     a: ({ children, href }) => (
-                      <a href={href} className="text-red-600 hover:text-yellow-600 underline font-medium transition-colors" target="_blank" rel="noopener noreferrer">
+                      <a href={href} className="text-red-600 dark:text-red-400 hover:text-yellow-600 dark:hover:text-yellow-400 underline font-medium transition-colors" target="_blank" rel="noopener noreferrer">
                         {children}
                       </a>
                     ),
@@ -135,15 +135,15 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
           </div>
 
           {/* Message Info */}
-          <div className={`text-xs text-gray-500 mt-2 flex items-center space-x-3 ${isUser ? "flex-row-reverse space-x-reverse" : ""}`}>
+          <div className={`text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center space-x-3 ${isUser ? "flex-row-reverse space-x-reverse" : ""}`}>
             {message.tokens && (
-              <span className="flex items-center space-x-1 bg-gray-100 px-2 py-1 rounded-full">
+              <span className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
                 <span>⚡</span>
                 <span>{message.tokens} tokens</span>
               </span>
             )}
             {message.model && (
-              <span className="flex items-center space-x-1 bg-gray-100 px-2 py-1 rounded-full">
+              <span className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
                 <span>🤖</span>
                 <span>{message.model}</span>
               </span>

@@ -73,7 +73,7 @@ const Header: React.FC<HeaderProps> = ({
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700/50 z-50 animate-slide-down overflow-hidden">
+            <div className="absolute right-0 mt-3 w-72 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700/50 z-50 animate-slide-down overflow-hidden">
               <div className="p-4 bg-gradient-to-r from-red-500 to-yellow-500">
                 <p className="text-base font-semibold text-white">
                   {user?.firstName} {user?.lastName}

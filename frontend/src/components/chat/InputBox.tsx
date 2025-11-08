@@ -304,21 +304,21 @@ const InputBox: React.FC<InputBoxProps> = ({
         </div>
       )}
 
-      <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-gray-200/50 hover:border-red-300 focus-within:border-red-500 focus-within:ring-4 focus-within:ring-red-100 transition-all overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-yellow-500/5 pointer-events-none"></div>
+      <div className="relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-gray-200/50 dark:border-gray-700/50 hover:border-red-300 dark:hover:border-red-600 focus-within:border-red-500 dark:focus-within:border-red-500 focus-within:ring-4 focus-within:ring-red-100 dark:focus-within:ring-red-900/50 transition-all overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-yellow-500/5 dark:from-red-500/10 dark:to-yellow-500/10 pointer-events-none"></div>
 
         <div className="relative flex items-end space-x-3 p-4">
           {/* Image upload button */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || isUploading}
-            className="flex-shrink-0 p-3 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 hover:from-red-100 hover:to-yellow-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-110 group"
+            className="flex-shrink-0 p-3 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 hover:from-red-100 hover:to-yellow-100 dark:hover:from-red-900/50 dark:hover:to-yellow-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-110 group"
           >
             {isUploading ? (
               <div className="w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
             ) : (
               <svg
-                className="w-6 h-6 text-gray-600 group-hover:text-red-600 transition-colors"
+                className="w-6 h-6 text-gray-600 dark:text-gray-300 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -352,7 +352,7 @@ const InputBox: React.FC<InputBoxProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             disabled={disabled}
-            className="flex-1 resize-none border-none outline-none bg-transparent text-gray-800 placeholder-gray-400 max-h-48 min-h-[28px] text-base"
+            className="flex-1 resize-none border-none outline-none bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 max-h-48 min-h-[28px] text-base"
             rows={1}
           />
 
@@ -384,15 +384,15 @@ const InputBox: React.FC<InputBoxProps> = ({
       </div>
 
       {/* Helper text */}
-      <div className="flex items-center justify-center space-x-4 text-xs text-gray-500 mt-3">
+      <div className="flex items-center justify-center space-x-4 text-xs text-gray-500 dark:text-gray-400 mt-3">
         <span className="flex items-center space-x-1">
-          <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-mono">
+          <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300 font-mono">
             Enter
           </kbd>
           <span>để gửi</span>
         </span>
         <span className="flex items-center space-x-1">
-          <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-mono">
+          <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300 font-mono">
             Shift + Enter
           </kbd>
           <span>để xuống dòng</span>

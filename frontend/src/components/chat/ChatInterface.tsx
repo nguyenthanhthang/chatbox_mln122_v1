@@ -105,12 +105,12 @@ const ChatInterface: React.FC = () => {
   };
 
   return (
-    <div className="relative flex h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50">
+    <div className="relative flex h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute w-96 h-96 bg-red-200/30 rounded-full blur-3xl animate-blob top-0 -left-48"></div>
-        <div className="absolute w-96 h-96 bg-yellow-200/30 rounded-full blur-3xl animate-blob animation-delay-2000 top-0 right-0"></div>
-        <div className="absolute w-96 h-96 bg-orange-200/30 rounded-full blur-3xl animate-blob animation-delay-4000 bottom-0 left-1/2"></div>
+        <div className="absolute w-96 h-96 bg-red-200/30 dark:bg-red-900/20 rounded-full blur-3xl animate-blob top-0 -left-48"></div>
+        <div className="absolute w-96 h-96 bg-yellow-200/30 dark:bg-yellow-900/20 rounded-full blur-3xl animate-blob animation-delay-2000 top-0 right-0"></div>
+        <div className="absolute w-96 h-96 bg-orange-200/30 dark:bg-orange-900/20 rounded-full blur-3xl animate-blob animation-delay-4000 bottom-0 left-1/2"></div>
       </div>
 
       {/* Sidebar */}
@@ -144,14 +144,14 @@ const ChatInterface: React.FC = () => {
               <div className="text-center max-w-2xl px-4">
                 <div className="w-32 h-32 mx-auto mb-6 relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-yellow-500 rounded-full animate-pulse"></div>
-                  <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
+                  <div className="absolute inset-2 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center">
                     <span className="text-6xl">🤖</span>
                   </div>
                 </div>
-                <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-red-600 to-yellow-600 bg-clip-text text-transparent animate-slide-up">
+                <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-red-600 to-yellow-600 dark:from-red-400 dark:to-yellow-400 bg-clip-text text-transparent animate-slide-up">
                   Chatbot Triết Học
                 </h1>
-                <p className="text-xl text-gray-700 mb-8 animate-slide-up animation-delay-200">
+                <p className="text-xl text-gray-700 dark:text-gray-300 mb-8 animate-slide-up animation-delay-200">
                   Bắt đầu cuộc trò chuyện với trí tuệ nhân tạo
                 </p>
                 <button
@@ -167,7 +167,7 @@ const ChatInterface: React.FC = () => {
               <MessageList messages={messages} />
               {isLoading && (
                 <div className="flex justify-center py-8 animate-fade-in">
-                  <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg">
+                  <div className="flex items-center space-x-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg">
                     <div className="w-3 h-3 bg-gradient-to-r from-red-500 to-yellow-500 rounded-full animate-bounce"></div>
                     <div className="w-3 h-3 bg-gradient-to-r from-red-500 to-yellow-500 rounded-full animate-bounce animation-delay-200"></div>
                     <div className="w-3 h-3 bg-gradient-to-r from-red-500 to-yellow-500 rounded-full animate-bounce animation-delay-400"></div>
@@ -180,7 +180,7 @@ const ChatInterface: React.FC = () => {
         </div>
 
         {/* Input Area */}
-        <div className="sticky bottom-0 left-0 right-0 px-4 py-6 bg-gradient-to-t from-white via-white/95 to-transparent">
+        <div className="sticky bottom-0 left-0 right-0 px-4 py-6 bg-gradient-to-t from-white dark:from-gray-900 via-white/95 dark:via-gray-900/95 to-transparent">
           <div className="max-w-4xl mx-auto">
             <InputBox
               onSendMessage={handleSendMessage}
