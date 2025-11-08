@@ -4,7 +4,7 @@
  */
 export interface ImageMetadata {
   url?: string;
-  base64?: string | null;
+  base64?: string; // KHÔNG cho phép null - chỉ set khi có giá trị
   publicId?: string; // Cloudinary public_id (ưu tiên dùng)
   mimeType: string;
   width?: number;

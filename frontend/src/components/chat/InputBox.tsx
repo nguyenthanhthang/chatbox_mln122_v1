@@ -1,6 +1,10 @@
 import React, { useState, useRef, KeyboardEvent } from "react";
 import { toastError, toastWarn, toastSuccess } from "../../utils/toast";
-import { compressImage, createImagePreview, needsCompression } from "../../utils/image-compressor";
+import {
+  compressImage,
+  createImagePreview,
+  needsCompression,
+} from "../../utils/image-compressor";
 import { chatService } from "../../services/chat.service";
 import { ImageMetadata } from "../../types/image.types";
 
@@ -18,17 +22,11 @@ const InputBox: React.FC<InputBoxProps> = ({
   autoFocus = false,
 }) => {
   const [message, setMessage] = useState("");
-  const [images, setImages] = useState<{ 
-    url?: string; 
-    base64?: string | null; 
-    publicId?: string; // Cloudinary public_id (ưu tiên)
-    mimeType: string;
-    width?: number;
-    height?: number;
-    format?: string;
-  }[]>([]);
+  const [images, setImages] = useState<ImageMetadata[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<{ [key: number]: number }>({});
+  const [uploadProgress, setUploadProgress] = useState<{
+    [key: number]: number;
+  }>({});
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileIndexRef = useRef(0);
@@ -52,7 +50,10 @@ const InputBox: React.FC<InputBoxProps> = ({
       textareaRef.current.style.height = "auto";
     }
 
-    await onSendMessage(messageToSend, imagesToSend.length > 0 ? imagesToSend : undefined);
+    await onSendMessage(
+      messageToSend,
+      imagesToSend.length > 0 ? imagesToSend : undefined
+    );
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -70,7 +71,9 @@ const InputBox: React.FC<InputBoxProps> = ({
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
@@ -89,24 +92,28 @@ const InputBox: React.FC<InputBoxProps> = ({
           toastWarn("Chỉ chấp nhận file ảnh");
           return null;
         }
-        
+
         // Block SVG files vì security risk
         if (file.type === "image/svg+xml") {
-          toastWarn("SVG files không được hỗ trợ. Vui lòng sử dụng PNG, JPG hoặc WebP.");
+          toastWarn(
+            "SVG files không được hỗ trợ. Vui lòng sử dụng PNG, JPG hoặc WebP."
+          );
           return null;
         }
 
         let preview: string | null = null;
-        
+
         try {
           const currentIndex = fileIndexRef.current++;
-          
+
           // Tối ưu: Hiển thị preview ngay lập tức (base64) - không cần đợi upload
           preview = await createImagePreview(file);
-          if (preview) {
-            setImages((prev) => [...prev, { base64: preview, mimeType: file.type }]);
-          }
-          
+          // Chỉ set base64 khi preview không null (Cách 1 - an toàn)
+          setImages((prev) => [
+            ...prev,
+            { ...(preview ? { base64: preview } : {}), mimeType: file.type },
+          ]);
+
           // Client-side compression trước khi upload (nếu file > 1MB)
           // Tối ưu: giảm xuống 1280px để upload nhanh hơn (theo yêu cầu)
           let fileToUpload = file;
@@ -117,36 +124,44 @@ const InputBox: React.FC<InputBoxProps> = ({
                 maxHeight: 1280,
                 quality: 0.8,
                 maxSizeMB: 1,
-                outputFormat: 'image/jpeg', // JPEG nhỏ hơn PNG
+                outputFormat: "image/jpeg", // JPEG nhỏ hơn PNG
               });
             } catch (compressError) {
-              console.warn('Compression failed, using original file:', compressError);
+              console.warn(
+                "Compression failed, using original file:",
+                compressError
+              );
               // Continue with original file if compression fails
             }
           }
-          
+
           setUploadProgress((prev) => ({ ...prev, [currentIndex]: 0 }));
-          
+
           // Upload compressed file (nhỏ hơn → upload nhanh hơn)
           const uploaded = await chatService.uploadImage(
             fileToUpload,
             (progress) => {
-              setUploadProgress((prev) => ({ ...prev, [currentIndex]: progress }));
+              setUploadProgress((prev) => ({
+                ...prev,
+                [currentIndex]: progress,
+              }));
             }
           );
-          
+
           setUploadProgress((prev) => {
             const newProgress = { ...prev };
             delete newProgress[currentIndex];
             return newProgress;
           });
-          
+
           if (uploaded && (uploaded.url || uploaded.publicId)) {
             // Replace base64 preview với Cloudinary metadata (ưu tiên publicId)
             if (preview) {
               setImages((prev) => {
                 const updated = [...prev];
-                const index = updated.findIndex((img) => img.base64 === preview);
+                const index = updated.findIndex(
+                  (img) => img.base64 === preview
+                );
                 if (index !== -1) {
                   updated[index] = {
                     url: uploaded.url, // Giữ để hiển thị preview
@@ -173,7 +188,7 @@ const InputBox: React.FC<InputBoxProps> = ({
             delete newProgress[currentIndex];
             return newProgress;
           });
-          
+
           // Remove preview if upload fails
           if (preview) {
             setImages((prev) => {
@@ -184,12 +199,17 @@ const InputBox: React.FC<InputBoxProps> = ({
               return prev;
             });
           }
-          
+
           // Check if rate limited
           if (uploadError?.response?.status === 429) {
-            toastError("Quá nhiều upload trong thời gian ngắn. Vui lòng đợi một chút.");
+            toastError(
+              "Quá nhiều upload trong thời gian ngắn. Vui lòng đợi một chút."
+            );
           } else {
-            const errorMessage = uploadError?.response?.data?.message || uploadError?.message || "Lỗi khi tải ảnh lên";
+            const errorMessage =
+              uploadError?.response?.data?.message ||
+              uploadError?.message ||
+              "Lỗi khi tải ảnh lên";
             toastError(errorMessage);
           }
           return null;
@@ -199,7 +219,10 @@ const InputBox: React.FC<InputBoxProps> = ({
       // Wait for all uploads to complete
       await Promise.all(uploadPromises);
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Lỗi khi tải ảnh lên";
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Lỗi khi tải ảnh lên";
       toastError(errorMessage);
     } finally {
       setIsUploading(false);
@@ -234,7 +257,9 @@ const InputBox: React.FC<InputBoxProps> = ({
                   <div className="w-full max-w-[60px] h-1 bg-white/20 rounded-full mt-1 overflow-hidden">
                     <div
                       className="h-full bg-white rounded-full transition-all duration-300"
-                      style={{ width: `${Object.values(uploadProgress)[0] || 0}%` }}
+                      style={{
+                        width: `${Object.values(uploadProgress)[0] || 0}%`,
+                      }}
                     ></div>
                   </div>
                 </div>
@@ -252,7 +277,7 @@ const InputBox: React.FC<InputBoxProps> = ({
 
       <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-gray-200/50 hover:border-red-300 focus-within:border-red-500 focus-within:ring-4 focus-within:ring-red-100 transition-all overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-yellow-500/5 pointer-events-none"></div>
-        
+
         <div className="relative flex items-end space-x-3 p-4">
           {/* Image upload button */}
           <button
@@ -263,8 +288,18 @@ const InputBox: React.FC<InputBoxProps> = ({
             {isUploading ? (
               <div className="w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
             ) : (
-              <svg className="w-6 h-6 text-gray-600 group-hover:text-red-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg
+                className="w-6 h-6 text-gray-600 group-hover:text-red-600 transition-colors"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
               </svg>
             )}
           </button>
@@ -291,7 +326,7 @@ const InputBox: React.FC<InputBoxProps> = ({
             className="flex-1 resize-none border-none outline-none bg-transparent text-gray-800 placeholder-gray-400 max-h-48 min-h-[28px] text-base"
             rows={1}
           />
-          
+
           <button
             onClick={handleSubmit}
             disabled={(!message.trim() && images.length === 0) || disabled}
@@ -301,8 +336,18 @@ const InputBox: React.FC<InputBoxProps> = ({
             {disabled ? (
               <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin relative z-10" />
             ) : (
-              <svg className="w-6 h-6 relative z-10 group-hover:rotate-45 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              <svg
+                className="w-6 h-6 relative z-10 group-hover:rotate-45 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
               </svg>
             )}
           </button>
@@ -312,11 +357,15 @@ const InputBox: React.FC<InputBoxProps> = ({
       {/* Helper text */}
       <div className="flex items-center justify-center space-x-4 text-xs text-gray-500 mt-3">
         <span className="flex items-center space-x-1">
-          <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-mono">Enter</kbd>
+          <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-mono">
+            Enter
+          </kbd>
           <span>để gửi</span>
         </span>
         <span className="flex items-center space-x-1">
-          <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-mono">Shift + Enter</kbd>
+          <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-700 font-mono">
+            Shift + Enter
+          </kbd>
           <span>để xuống dòng</span>
         </span>
       </div>
