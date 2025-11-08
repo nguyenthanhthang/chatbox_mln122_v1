@@ -26,10 +26,11 @@ export class AuthService {
 
       if (status === 401) {
         // Unauthorized - Email hoặc mật khẩu sai, hoặc tài khoản bị vô hiệu hóa
+        // Luôn hiển thị message từ server (có thể là "Email hoặc mật khẩu không đúng" hoặc "Tài khoản đã bị vô hiệu hóa")
         throw new Error(message || "Email hoặc mật khẩu không đúng");
       } else if (status === 404) {
-        // Not Found - Email không tồn tại
-        throw new Error("Email không tồn tại trong hệ thống");
+        // Not Found - Backend không nên trả về 404 nữa, nhưng nếu có thì vẫn báo chung
+        throw new Error("Email hoặc mật khẩu không đúng");
       } else if (status === 400) {
         // Bad Request - Dữ liệu không hợp lệ
         throw new Error(message || "Dữ liệu đăng nhập không hợp lệ");

@@ -42,7 +42,13 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.usersService.findByEmail(loginDto.email);
+    let user;
+    try {
+      user = await this.usersService.findByEmail(loginDto.email);
+    } catch (error) {
+      // Không tiết lộ email có tồn tại hay không (bảo mật)
+      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+    }
 
     if (!user.isActive) {
       throw new UnauthorizedException('Tài khoản đã bị vô hiệu hóa');

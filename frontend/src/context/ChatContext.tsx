@@ -4,10 +4,10 @@ import React, {
   useState,
   ReactNode,
   useCallback,
-  useEffect,
 } from "react";
 import { chatService } from "../services/chat.service";
-import { websocketService } from "../services/websocket.service";
+// WebSocket disabled - using HTTP fallback only
+// import { websocketService } from "../services/websocket.service";
 import { toastError, toastSuccess } from "../utils/toast";
 import { ImageMetadata } from "../types/image.types";
 
@@ -47,7 +47,7 @@ interface ChatContextType {
   currentSession: ChatSession | null;
   messages: Message[];
   isLoading: boolean;
-  isStreaming: boolean;
+  isStreaming: boolean; // Always false - WebSocket disabled
 
   // Sessions
   sessions: ChatSession[];
@@ -90,7 +90,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   );
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
+  // WebSocket disabled - isStreaming no longer needed
+  // const [isStreaming, setIsStreaming] = useState(false);
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
@@ -98,102 +99,32 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const [aiSettings, setAISettings] = useState<AISettings | null>(null);
   const [availableModels, setAvailableModels] = useState<any[]>([]);
 
-  // WebSocket integration for realtime AI responses
-  useEffect(() => {
-    // Connect WebSocket
-    websocketService.connect();
+  // WebSocket integration DISABLED - using HTTP fallback only
+  // useEffect(() => {
+  //   websocketService.connect();
+  //   ...
+  // }, [currentSession?.id]);
 
-    // Handle AI response events
-    const handleAIResponse = (data: {
-      sessionId: string;
-      messageId: string;
-      content: string;
-      tokens?: number;
-      model?: string;
-      status: 'processing' | 'completed' | 'error';
-      error?: string;
-    }) => {
-      // Only update if it's for current session
-      if (currentSession?.id === data.sessionId) {
-        if (data.status === 'completed') {
-          // Update or add AI message
-          setMessages((prev) => {
-            const existingIndex = prev.findIndex(
-              (m) => m.id === data.messageId || m.id.startsWith('ai-pending-')
-            );
-            if (existingIndex !== -1) {
-              // Replace placeholder
-              const updated = [...prev];
-              updated[existingIndex] = {
-                id: data.messageId,
-                role: 'assistant',
-                content: data.content,
-                timestamp: new Date().toISOString(),
-                tokens: data.tokens,
-                model: data.model,
-              };
-              return updated;
-            } else {
-              // Add new message
-              return [
-                ...prev,
-                {
-                  id: data.messageId,
-                  role: 'assistant',
-                  content: data.content,
-                  timestamp: new Date().toISOString(),
-                  tokens: data.tokens,
-                  model: data.model,
-                },
-              ];
-            }
-          });
-          setIsStreaming(false);
-        } else if (data.status === 'error') {
-          // Show error message
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id.startsWith('ai-pending-')
-                ? {
-                    ...m,
-                    id: `ai-error-${Date.now()}`,
-                    content: data.error || 'Có lỗi khi tạo phản hồi',
-                  }
-                : m
-            )
-          );
-          setIsStreaming(false);
-          toastError(data.error || 'Có lỗi khi tạo phản hồi từ AI');
-        }
-      }
-    };
-
-    // Handle message status updates
-    const handleMessageStatus = (data: {
-      sessionId: string;
-      messageId: string;
-      status: 'pending' | 'processing' | 'completed' | 'error';
-    }) => {
-      if (currentSession?.id === data.sessionId) {
-        if (data.status === 'processing') {
-          setIsStreaming(true);
-        } else if (data.status === 'completed' || data.status === 'error') {
-          setIsStreaming(false);
-        }
-      }
-    };
-
-    // Subscribe to events
-    websocketService.onAIResponse(handleAIResponse);
-    websocketService.onMessageStatus(handleMessageStatus);
-
-    // Cleanup on unmount
-    return () => {
-      websocketService.offAIResponse(handleAIResponse);
-      websocketService.offMessageStatus(handleMessageStatus);
-      websocketService.disconnect();
-    };
-  }, [currentSession?.id]);
+  // Load sessions - defined first to avoid "used before defined" errors
+  const loadSessions = useCallback(async () => {
+    try {
+      setSessionsLoading(true);
+      const response = await chatService.getSessions();
+      const normalized = response.sessions.map((s: any) => ({
+        ...s,
+        id: s.id || s._id,
+      }));
+      setSessions(normalized);
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Không thể tải danh sách cuộc trò chuyện";
+      toastError(errorMessage);
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, []);
 
   // Create new session
   const createNewSession = useCallback(
@@ -216,14 +147,17 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         await loadSessions(); // Refresh sessions list
         toastSuccess("Tạo cuộc trò chuyện mới thành công");
       } catch (error: any) {
-        const errorMessage = error?.response?.data?.message || error?.message || "Không thể tạo cuộc trò chuyện mới";
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Không thể tạo cuộc trò chuyện mới";
         toastError(errorMessage);
         throw error;
       } finally {
         setIsLoading(false);
       }
     },
-    []
+    [loadSessions]
   );
 
   // Load session
@@ -240,10 +174,19 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         id: (session as any).id || (session as any)._id,
       } as ChatSession;
 
+      // Normalize messages to ensure they have `id` field
+      const normalizedMessages: Message[] = history.map((msg: any) => ({
+        ...msg,
+        id: msg.id || msg._id || `msg-${Date.now()}-${Math.random()}`,
+      }));
+
       setCurrentSession(normalized);
-      setMessages(history);
+      setMessages(normalizedMessages);
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Không thể tải cuộc trò chuyện";
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Không thể tải cuộc trò chuyện";
       toastError(errorMessage);
       throw error;
     } finally {
@@ -266,12 +209,15 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           await createNewSession();
         }
       } catch (error: any) {
-        const errorMessage = error?.response?.data?.message || error?.message || "Không thể xóa cuộc trò chuyện";
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Không thể xóa cuộc trò chuyện";
         toastError(errorMessage);
         throw error;
       }
     },
-    [currentSession, createNewSession]
+    [currentSession, createNewSession, loadSessions]
   );
 
   // Send message
@@ -285,9 +231,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         // ensure we have a session id to send into
         let sessionIdForSend: string | undefined = currentSession?.id;
         if (!sessionIdForSend) {
-        const created = await chatService.createSession({
-          title: "Cuộc trò chuyện mới",
-        });
+          const created = await chatService.createSession({
+            title: "Cuộc trò chuyện mới",
+          });
           const normalized: ChatSession = {
             ...(created as any),
             id: (created as any).id || (created as any)._id,
@@ -320,8 +266,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           },
         ]);
 
-        // Send to AI (response will come via WebSocket for realtime updates)
-        // But we still wait for HTTP response as fallback
+        // Send to AI (HTTP only - WebSocket disabled)
         const response = await chatService.sendMessage({
           message: content,
           sessionId: sessionIdForSend,
@@ -329,37 +274,24 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           images: images,
         });
 
-        // If WebSocket didn't update the message (fallback after 2 seconds), update manually
-        // This ensures compatibility if WebSocket fails
-        setTimeout(() => {
-          setMessages((prev) => {
-            const hasAIResponse = prev.some(
-              (m) =>
-                (m.id === response.aiMessage.id ||
-                  m.id === response.aiMessage._id ||
-                  m.id === placeholderId) &&
-                m.content.length > 0
-            );
-            if (!hasAIResponse) {
-              return prev.map((m) =>
-                m.id === placeholderId
-                  ? {
-                      id:
-                        response.aiMessage.id ||
-                        response.aiMessage._id ||
-                        `ai-${Date.now()}`,
-                      role: "assistant",
-                      content: response.aiMessage.content,
-                      timestamp: new Date().toISOString(),
-                      tokens: response.aiMessage.tokens,
-                      model: response.aiMessage.model,
-                    }
-                  : m
-              );
-            }
-            return prev;
-          });
-        }, 2000);
+        // Update AI message from HTTP response
+        setMessages((prev) => {
+          return prev.map((m) =>
+            m.id === placeholderId
+              ? {
+                  id:
+                    response.aiMessage.id ||
+                    response.aiMessage._id ||
+                    `ai-${Date.now()}`,
+                  role: "assistant",
+                  content: response.aiMessage.content,
+                  timestamp: new Date().toISOString(),
+                  tokens: response.aiMessage.tokens,
+                  model: response.aiMessage.model,
+                }
+              : m
+          );
+        });
 
         // Update current session if it was created
         if (response.userMessage && !currentSession) {
@@ -372,14 +304,31 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
             setCurrentSession(newSession);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to send message:", error);
-        // Replace placeholder with an error message
-        const errorMessage = (error as any)?.response?.data?.message || (error as any)?.message || "Có lỗi khi gửi tin nhắn";
+        console.error("Error response:", error?.response?.data);
+
+        // Extract detailed error message
+        let errorMessage = "Có lỗi khi gửi tin nhắn";
+        if (error?.response?.data) {
+          const data = error.response.data;
+          if (typeof data === "string") {
+            errorMessage = data;
+          } else if (data.message) {
+            errorMessage = Array.isArray(data.message)
+              ? data.message.join("; ")
+              : data.message;
+          } else if (data.error) {
+            errorMessage = data.error;
+          }
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+
         toastError(errorMessage);
         setMessages((prev) =>
           prev.map((m) =>
-            m.id.startsWith("ai-pending-")
+            m.id && m.id.startsWith("ai-pending-")
               ? {
                   ...m,
                   id: `ai-${Date.now()}`,
@@ -394,7 +343,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         setIsLoading(false);
       }
     },
-    [currentSession, sessions]
+    [currentSession, sessions, loadSessions]
   );
 
   // Clear current session
@@ -406,7 +355,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       setMessages([]);
       toastSuccess("Đã xóa lịch sử cuộc trò chuyện");
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Không thể xóa lịch sử";
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Không thể xóa lịch sử";
       toastError(errorMessage);
       throw error;
     }
@@ -421,29 +373,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       await loadSessions();
       toastSuccess("Đã xóa toàn bộ lịch sử");
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Không thể xóa lịch sử";
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Không thể xóa lịch sử";
       toastError(errorMessage);
       throw error;
     }
-  }, []);
-
-  // Load sessions
-  const loadSessions = useCallback(async () => {
-    try {
-      setSessionsLoading(true);
-      const response = await chatService.getSessions();
-      const normalized = response.sessions.map((s: any) => ({
-        ...s,
-        id: s.id || s._id,
-      }));
-      setSessions(normalized);
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Không thể tải danh sách cuộc trò chuyện";
-      toastError(errorMessage);
-    } finally {
-      setSessionsLoading(false);
-    }
-  }, []);
+  }, [loadSessions]);
 
   // AI Settings
   const updateAISettings = useCallback(
@@ -453,7 +390,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         setAISettings(updatedSettings);
         toastSuccess("Cập nhật cài đặt AI thành công");
       } catch (error: any) {
-        const errorMessage = error?.response?.data?.message || error?.message || "Không thể cập nhật cài đặt AI";
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Không thể cập nhật cài đặt AI";
         toastError(errorMessage);
         throw error;
       }
@@ -485,7 +425,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     currentSession,
     messages,
     isLoading,
-    isStreaming,
+    isStreaming: false, // WebSocket disabled
     sessions,
     sessionsLoading,
     loadSessions,

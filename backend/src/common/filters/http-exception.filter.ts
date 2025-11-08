@@ -21,10 +21,20 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      message =
-        typeof exceptionResponse === 'string'
-          ? exceptionResponse
-          : (exceptionResponse as any)?.message || exception.message;
+      
+      if (typeof exceptionResponse === 'string') {
+        message = exceptionResponse;
+      } else {
+        const responseObj = exceptionResponse as any;
+        // Handle validation errors (array of messages)
+        if (Array.isArray(responseObj.message)) {
+          message = responseObj.message.join('; ');
+        } else if (responseObj.message) {
+          message = responseObj.message;
+        } else {
+          message = exception.message;
+        }
+      }
     }
     // Handle multer errors (file upload)
     else if ((exception as any)?.code === 'LIMIT_FILE_SIZE') {

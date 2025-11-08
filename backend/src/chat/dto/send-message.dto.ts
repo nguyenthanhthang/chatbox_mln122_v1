@@ -6,15 +6,16 @@ import {
   Max,
   IsArray,
   ValidateNested,
-  IsBase64,
-  IsMimeType,
+  ValidateIf,
+  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsBase64OrDataUrl } from './validators/base64.validator';
 
 export class ImageDto {
   @IsOptional()
   @IsString()
-  @IsBase64()
+  @IsBase64OrDataUrl()
   base64?: string;
 
   @IsOptional()
@@ -27,7 +28,10 @@ export class ImageDto {
 
   @IsOptional()
   @IsString()
-  @IsMimeType()
+  @ValidateIf((o) => o.mimeType !== undefined && o.mimeType !== null)
+  @Matches(/^[a-z]+\/[a-z0-9\-\+]+$/i, {
+    message: 'mimeType phải có định dạng type/subtype (ví dụ: image/jpeg)',
+  })
   mimeType?: string;
 
   @IsOptional()

@@ -26,12 +26,36 @@ export class GoogleAIService {
 
   constructor(private configService: ConfigService) {
     const apiKey = this.configService.get<string>('GOOGLE_AI_API_KEY');
-    if (!apiKey) {
-      throw new Error('GOOGLE_AI_API_KEY chưa được cấu hình');
+    
+    // Check if API key is missing or is placeholder
+    if (!apiKey || apiKey.trim() === '' || apiKey === 'your-google-ai-api-key-here') {
+      this.logger.error('GOOGLE_AI_API_KEY chưa được cấu hình hoặc vẫn là placeholder');
+      this.logger.error('Vui lòng set GOOGLE_AI_API_KEY trong:');
+      this.logger.error('  - Local: file backend/.env');
+      this.logger.error('  - Render: Environment Variables trong Dashboard');
+      throw new Error('GOOGLE_AI_API_KEY chưa được cấu hình. Vui lòng kiểm tra file .env hoặc environment variables trên Render.');
+    }
+
+    // Trim whitespace (common mistake when copy-pasting)
+    const trimmedKey = apiKey.trim();
+    if (trimmedKey !== apiKey) {
+      this.logger.warn('API key có khoảng trắng thừa, đã tự động trim');
+    }
+
+    // Log API key status (masked for security)
+    const maskedKey = trimmedKey.length > 8 
+      ? `${trimmedKey.substring(0, 4)}...${trimmedKey.substring(trimmedKey.length - 4)}`
+      : '***';
+    this.logger.log(`Google AI API Key loaded: ${maskedKey} (length: ${trimmedKey.length})`);
+
+    // Validate API key format (Google AI keys usually start with AIza)
+    if (!trimmedKey.startsWith('AIza')) {
+      this.logger.warn('API key không có định dạng chuẩn của Google AI (thường bắt đầu với "AIza")');
+      this.logger.warn(`API key bắt đầu với: ${trimmedKey.substring(0, 4)}`);
     }
 
     // Use broadly supported models on v1beta
-    this.genAI = new GoogleGenerativeAI(apiKey);
+    this.genAI = new GoogleGenerativeAI(trimmedKey);
     this.textModel = this.genAI.getGenerativeModel({
       model: 'gemini-2.0-flash',
       generationConfig: {
@@ -92,8 +116,24 @@ export class GoogleAIService {
         tokens: usage.totalTokenCount ?? 0,
         model: 'gemini-2.0-flash',
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Error generating text response:', error);
+      
+      // Check for API key errors specifically
+      if (
+        error?.message?.includes('API key not valid') || 
+        error?.message?.includes('API_KEY_INVALID') ||
+        error?.errorDetails?.some((d: any) => d.reason === 'API_KEY_INVALID') ||
+        error?.status === 400 && error?.message?.includes('API')
+      ) {
+        this.logger.error('GOOGLE_AI_API_KEY không hợp lệ hoặc đã hết hạn.');
+        this.logger.error('Vui lòng kiểm tra:');
+        this.logger.error('  1. API key có đúng format không (bắt đầu với AIza...)');
+        this.logger.error('  2. API key có còn hoạt động không (kiểm tra trên Google AI Studio)');
+        this.logger.error('  3. API key đã được set đúng trong Render Environment Variables');
+        throw new Error('API key Google AI không hợp lệ. Vui lòng kiểm tra GOOGLE_AI_API_KEY trong Render Dashboard.');
+      }
+      
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Tạo phản hồi văn bản từ Google AI thất bại: ${message}`);
     }
@@ -139,8 +179,24 @@ export class GoogleAIService {
         tokens: usage.totalTokenCount ?? 0,
         model: 'gemini-2.0-flash',
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Error generating multimodal response:', error);
+      
+      // Check for API key errors specifically
+      if (
+        error?.message?.includes('API key not valid') || 
+        error?.message?.includes('API_KEY_INVALID') ||
+        error?.errorDetails?.some((d: any) => d.reason === 'API_KEY_INVALID') ||
+        error?.status === 400 && error?.message?.includes('API')
+      ) {
+        this.logger.error('GOOGLE_AI_API_KEY không hợp lệ hoặc đã hết hạn.');
+        this.logger.error('Vui lòng kiểm tra:');
+        this.logger.error('  1. API key có đúng format không (bắt đầu với AIza...)');
+        this.logger.error('  2. API key có còn hoạt động không (kiểm tra trên Google AI Studio)');
+        this.logger.error('  3. API key đã được set đúng trong Render Environment Variables');
+        throw new Error('API key Google AI không hợp lệ. Vui lòng kiểm tra GOOGLE_AI_API_KEY trong Render Dashboard.');
+      }
+      
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Tạo phản hồi đa phương tiện từ Google AI thất bại: ${message}`);
     }
