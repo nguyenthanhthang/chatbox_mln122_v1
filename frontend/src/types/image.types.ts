@@ -12,5 +12,5 @@ export interface ImageMetadata {
   format?: string; // jpg, png, webp, etc.
   filename?: string;
   size?: number; // bytes
+  tempId?: number; // Chỉ dùng trong UI cho progress / tracking (tạm thời)
 }
-

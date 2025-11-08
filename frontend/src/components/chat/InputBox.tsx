@@ -77,10 +77,32 @@ const InputBox: React.FC<InputBoxProps> = ({
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
+    // Giới hạn số ảnh (4 ảnh/lần) để UI gọn và tránh spam băng thông
+    const MAX_IMAGES = 4;
+    const remainingSlots = MAX_IMAGES - images.length;
+    if (remainingSlots <= 0) {
+      toastWarn(
+        `Chỉ có thể tải tối đa ${MAX_IMAGES} ảnh. Vui lòng xóa một số ảnh trước khi thêm mới.`
+      );
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+
+    const filesToProcess = Array.from(files).slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      toastWarn(
+        `Chỉ có thể thêm tối đa ${remainingSlots} ảnh nữa. ${
+          files.length - remainingSlots
+        } ảnh đã bị bỏ qua.`
+      );
+    }
+
     setIsUploading(true);
     try {
       // Process all files in parallel for better performance
-      const uploadPromises = Array.from(files).map(async (file) => {
+      const uploadPromises = filesToProcess.map(async (file) => {
         // Kiểm tra kích thước file
         if (file.size > 5 * 1024 * 1024) {
           toastWarn("File phải nhỏ hơn 5MB");
@@ -109,9 +131,14 @@ const InputBox: React.FC<InputBoxProps> = ({
           // Tối ưu: Hiển thị preview ngay lập tức (base64) - không cần đợi upload
           preview = await createImagePreview(file);
           // Chỉ set base64 khi preview không null (Cách 1 - an toàn)
+          // Gắn tempId để track progress riêng cho từng ảnh
           setImages((prev) => [
             ...prev,
-            { ...(preview ? { base64: preview } : {}), mimeType: file.type },
+            {
+              ...(preview ? { base64: preview } : {}),
+              mimeType: file.type,
+              tempId: currentIndex, // Thêm tempId để track progress
+            },
           ]);
 
           // Client-side compression trước khi upload (nếu file > 1MB)
@@ -156,25 +183,27 @@ const InputBox: React.FC<InputBoxProps> = ({
 
           if (uploaded && (uploaded.url || uploaded.publicId)) {
             // Replace base64 preview với Cloudinary metadata (ưu tiên publicId)
-            if (preview) {
-              setImages((prev) => {
-                const updated = [...prev];
-                const index = updated.findIndex(
-                  (img) => img.base64 === preview
-                );
-                if (index !== -1) {
-                  updated[index] = {
-                    url: uploaded.url, // Giữ để hiển thị preview
-                    publicId: uploaded.publicId, // Gửi publicId lên BE (tối ưu hơn)
-                    mimeType: uploaded.mimeType,
-                    width: uploaded.width,
-                    height: uploaded.height,
-                    format: uploaded.format,
-                  };
-                }
-                return updated;
-              });
-            }
+            // Dùng tempId để tìm đúng ảnh (chính xác hơn base64)
+            setImages((prev) => {
+              const updated = [...prev];
+              const idx = updated.findIndex(
+                (img) => img.tempId === currentIndex
+              );
+              if (idx !== -1) {
+                updated[idx] = {
+                  url: uploaded.url, // Giữ để hiển thị preview
+                  publicId: uploaded.publicId, // Gửi publicId lên BE (tối ưu hơn)
+                  mimeType: uploaded.mimeType,
+                  width: uploaded.width,
+                  height: uploaded.height,
+                  format: uploaded.format,
+                  // Giữ tempId để tiếp tục track nếu cần
+                  tempId: currentIndex,
+                  // Không cần base64 nữa (đã có url từ Cloudinary)
+                };
+              }
+              return updated;
+            });
             toastSuccess("Tải ảnh lên thành công");
             return uploaded;
           } else {
@@ -189,16 +218,10 @@ const InputBox: React.FC<InputBoxProps> = ({
             return newProgress;
           });
 
-          // Remove preview if upload fails
-          if (preview) {
-            setImages((prev) => {
-              const index = prev.findIndex((img) => img.base64 === preview);
-              if (index !== -1) {
-                return prev.filter((_, i) => i !== index);
-              }
-              return prev;
-            });
-          }
+          // Remove preview if upload fails - dùng tempId để tìm chính xác
+          setImages((prev) =>
+            prev.filter((img) => img.tempId !== currentIndex)
+          );
 
           // Check if rate limited
           if (uploadError?.response?.status === 429) {
@@ -242,28 +265,33 @@ const InputBox: React.FC<InputBoxProps> = ({
       {images.length > 0 && (
         <div className="mb-4 flex flex-wrap gap-3">
           {images.map((image, index) => (
-            <div key={index} className="relative group animate-scale-in">
+            <div
+              key={image.tempId ?? image.publicId ?? index}
+              className="relative group animate-scale-in"
+            >
               <img
                 src={image.url || image.base64 || ""}
                 alt={`Ảnh tải lên ${index + 1}`}
                 className="w-20 h-20 object-cover rounded-2xl border-2 border-gray-200 shadow-lg group-hover:shadow-xl transition-all"
               />
-              {isUploading && Object.values(uploadProgress).length > 0 && (
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-xs rounded-2xl backdrop-blur-sm">
-                  <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mb-2"></div>
-                  <div className="text-xs font-medium">
-                    {Object.values(uploadProgress)[0] || 0}%
+              {isUploading &&
+                image.tempId !== undefined &&
+                uploadProgress[image.tempId] !== undefined && (
+                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-xs rounded-2xl backdrop-blur-sm">
+                    <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mb-2"></div>
+                    <div className="text-xs font-medium">
+                      {uploadProgress[image.tempId] ?? 0}%
+                    </div>
+                    <div className="w-full max-w-[60px] h-1 bg-white/20 rounded-full mt-1 overflow-hidden">
+                      <div
+                        className="h-full bg-white rounded-full transition-all duration-300"
+                        style={{
+                          width: `${uploadProgress[image.tempId] ?? 0}%`,
+                        }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="w-full max-w-[60px] h-1 bg-white/20 rounded-full mt-1 overflow-hidden">
-                    <div
-                      className="h-full bg-white rounded-full transition-all duration-300"
-                      style={{
-                        width: `${Object.values(uploadProgress)[0] || 0}%`,
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              )}
+                )}
               <button
                 onClick={() => removeImage(index)}
                 className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-full flex items-center justify-center text-lg hover:scale-110 transition-transform shadow-lg"
