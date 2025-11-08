@@ -146,6 +146,62 @@ export class GoogleAIService {
     }
   }
 
+  /**
+   * Convert Cloudinary public_id to optimized URL for Gemini
+   * Dùng URL transform để giảm kích thước (max 1024px) và tối ưu format
+   */
+  convertCloudinaryPublicIdToPart(
+    publicId: string,
+    cloudName: string,
+    mimeType?: string,
+  ): Part {
+    // Tạo URL transform: f_auto (auto format), q_auto (auto quality), w_1024 (max width 1024)
+    // Gemini có thể fetch từ URL trực tiếp, không cần download
+    const optimizedUrl = `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_1024,h_1024,c_limit/${publicId}`;
+    return {
+      inlineData: {
+        data: optimizedUrl, // Gemini sẽ tự fetch từ URL này
+        mimeType: mimeType || 'image/jpeg',
+      },
+    };
+  }
+
+  /**
+   * Convert Cloudinary URL to optimized URL for Gemini
+   */
+  convertCloudinaryUrlToPart(url: string, mimeType?: string): Part {
+    // Nếu đã là Cloudinary URL, transform nó
+    if (url.includes('res.cloudinary.com')) {
+      // Thêm transform vào URL nếu chưa có
+      if (!url.includes('/upload/')) {
+        return {
+          inlineData: {
+            data: url,
+            mimeType: mimeType || 'image/jpeg',
+          },
+        };
+      }
+      // Insert transform vào URL
+      const optimizedUrl = url.replace(
+        '/upload/',
+        '/upload/f_auto,q_auto,w_1024,h_1024,c_limit/',
+      );
+      return {
+        inlineData: {
+          data: optimizedUrl,
+          mimeType: mimeType || 'image/jpeg',
+        },
+      };
+    }
+    // Nếu không phải Cloudinary URL, dùng trực tiếp
+    return {
+      inlineData: {
+        data: url,
+        mimeType: mimeType || 'image/jpeg',
+      },
+    };
+  }
+
   // Helper method to convert base64 image to Google AI format
   convertImageToPart(base64Image: string, mimeType: string): Part {
     // Remove data URL prefix if present
@@ -157,6 +213,15 @@ export class GoogleAIService {
         mimeType: mimeType,
       },
     };
+  }
+
+  /**
+   * Get Cloudinary cloud name from config
+   */
+  getCloudName(): string {
+    return (
+      this.configService.get<string>('CLOUDINARY_CLOUD_NAME') || 'missing'
+    );
   }
 
   // Helper to fetch an image URL and convert to inlineData Part

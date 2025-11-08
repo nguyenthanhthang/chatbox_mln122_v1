@@ -113,6 +113,56 @@ export class ChatController {
     return this.chatService.sendMessage(sendMessageDto, user.id);
   }
 
+  /**
+   * Generate Cloudinary upload signature for direct client-side upload
+   * FE sẽ dùng signature này để upload trực tiếp lên Cloudinary
+   */
+  @Post('upload-signature')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ short: { ttl: 60000, limit: 20 } }) // 20 requests per minute
+  async getUploadSignature(@Body() body: { folder?: string; publicId?: string }) {
+    try {
+      const folder = body.folder || 'chatbox/images';
+      const timestamp = Math.round(Date.now() / 1000);
+      
+      // Generate signature parameters
+      const params: any = {
+        timestamp,
+        folder,
+        eager: 'w_320,h_320,c_limit,f_auto,q_auto', // Thumbnail sẵn
+        transformation: 'f_auto,q_auto,w_1920,h_1920,c_limit', // Transform chính
+      };
+
+      if (body.publicId) {
+        params.public_id = body.publicId;
+      }
+
+      // Generate signature
+      const signature = cloudinary.utils.api_sign_request(
+        params,
+        this.configService.get<string>('CLOUDINARY_API_SECRET') || '',
+      );
+
+      return {
+        signature,
+        timestamp,
+        folder,
+        cloudName: this.configService.get<string>('CLOUDINARY_CLOUD_NAME'),
+        apiKey: this.configService.get<string>('CLOUDINARY_API_KEY'),
+        eager: params.eager,
+        transformation: params.transformation,
+      };
+    } catch (err: any) {
+      throw new BadRequestException(
+        `Không thể tạo chữ ký upload: ${err?.message || String(err)}`,
+      );
+    }
+  }
+
+  /**
+   * Legacy endpoint - vẫn giữ để backward compatibility
+   * Nhưng khuyến khích dùng direct upload với signature
+   */
   @Post('upload-image')
   @UseGuards(ThrottlerGuard)
   @Throttle({ short: { ttl: 60000, limit: 5 } }) // 5 uploads per minute

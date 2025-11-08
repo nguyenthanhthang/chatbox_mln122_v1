@@ -17,7 +17,15 @@ const InputBox: React.FC<InputBoxProps> = ({
   autoFocus = false,
 }) => {
   const [message, setMessage] = useState("");
-  const [images, setImages] = useState<{ url?: string; base64?: string; mimeType: string }[]>([]);
+  const [images, setImages] = useState<{ 
+    url?: string; 
+    base64?: string; 
+    publicId?: string; // Cloudinary public_id (ưu tiên)
+    mimeType: string;
+    width?: number;
+    height?: number;
+    format?: string;
+  }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: number]: number }>({});
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -97,15 +105,16 @@ const InputBox: React.FC<InputBoxProps> = ({
           setImages((prev) => [...prev, { base64: preview, mimeType: file.type }]);
           
           // Client-side compression trước khi upload (nếu file > 1MB)
+          // Tối ưu: giảm xuống 1280px để upload nhanh hơn (theo yêu cầu)
           let fileToUpload = file;
           if (needsCompression(file, 1)) {
             try {
               fileToUpload = await compressImage(file, {
-                maxWidth: 1920,
-                maxHeight: 1920,
+                maxWidth: 1280, // Giảm từ 1920 xuống 1280px (theo yêu cầu)
+                maxHeight: 1280,
                 quality: 0.8,
                 maxSizeMB: 1,
-                outputFormat: 'image/jpeg',
+                outputFormat: 'image/jpeg', // JPEG nhỏ hơn PNG
               });
             } catch (compressError) {
               console.warn('Compression failed, using original file:', compressError);
@@ -129,20 +138,27 @@ const InputBox: React.FC<InputBoxProps> = ({
             return newProgress;
           });
           
-          if (uploaded && uploaded.url) {
-            // Replace base64 preview với Cloudinary URL (chất lượng tốt hơn)
+          if (uploaded && (uploaded.url || uploaded.publicId)) {
+            // Replace base64 preview với Cloudinary metadata (ưu tiên publicId)
             setImages((prev) => {
               const updated = [...prev];
               const index = updated.findIndex((img) => img.base64 === preview);
               if (index !== -1) {
-                updated[index] = { url: uploaded.url, mimeType: uploaded.mimeType };
+                updated[index] = {
+                  url: uploaded.url, // Giữ để hiển thị preview
+                  publicId: uploaded.publicId, // Gửi publicId lên BE (tối ưu hơn)
+                  mimeType: uploaded.mimeType,
+                  width: uploaded.width,
+                  height: uploaded.height,
+                  format: uploaded.format,
+                };
               }
               return updated;
             });
             toastSuccess("Tải ảnh lên thành công");
             return uploaded;
           } else {
-            toastError("Không nhận được URL ảnh từ server");
+            toastError("Không nhận được metadata ảnh từ server");
             return null;
           }
         } catch (uploadError: any) {

@@ -23,6 +23,10 @@ export class ImageDto {
 
   @IsOptional()
   @IsString()
+  publicId?: string; // Cloudinary public_id (ưu tiên dùng thay vì url)
+
+  @IsOptional()
+  @IsString()
   @IsMimeType()
   mimeType?: string;
 
@@ -33,6 +37,18 @@ export class ImageDto {
   @IsOptional()
   @IsNumber()
   size?: number;
+
+  @IsOptional()
+  @IsNumber()
+  width?: number;
+
+  @IsOptional()
+  @IsNumber()
+  height?: number;
+
+  @IsOptional()
+  @IsString()
+  format?: string; // jpg, png, webp, etc.
 }
 
 export class SendMessageDto {

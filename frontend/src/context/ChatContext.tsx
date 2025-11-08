@@ -4,8 +4,11 @@ import React, {
   useState,
   ReactNode,
   useCallback,
+  useEffect,
+  useRef,
 } from "react";
 import { chatService } from "../services/chat.service";
+import { websocketService } from "../services/websocket.service";
 import { toastError, toastSuccess } from "../utils/toast";
 
 export interface Message {
@@ -93,6 +96,103 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   const [aiSettings, setAISettings] = useState<AISettings | null>(null);
   const [availableModels, setAvailableModels] = useState<any[]>([]);
+
+  // WebSocket integration for realtime AI responses
+  useEffect(() => {
+    // Connect WebSocket
+    websocketService.connect();
+
+    // Handle AI response events
+    const handleAIResponse = (data: {
+      sessionId: string;
+      messageId: string;
+      content: string;
+      tokens?: number;
+      model?: string;
+      status: 'processing' | 'completed' | 'error';
+      error?: string;
+    }) => {
+      // Only update if it's for current session
+      if (currentSession?.id === data.sessionId) {
+        if (data.status === 'completed') {
+          // Update or add AI message
+          setMessages((prev) => {
+            const existingIndex = prev.findIndex(
+              (m) => m.id === data.messageId || m.id.startsWith('ai-pending-')
+            );
+            if (existingIndex !== -1) {
+              // Replace placeholder
+              const updated = [...prev];
+              updated[existingIndex] = {
+                id: data.messageId,
+                role: 'assistant',
+                content: data.content,
+                timestamp: new Date().toISOString(),
+                tokens: data.tokens,
+                model: data.model,
+              };
+              return updated;
+            } else {
+              // Add new message
+              return [
+                ...prev,
+                {
+                  id: data.messageId,
+                  role: 'assistant',
+                  content: data.content,
+                  timestamp: new Date().toISOString(),
+                  tokens: data.tokens,
+                  model: data.model,
+                },
+              ];
+            }
+          });
+          setIsStreaming(false);
+        } else if (data.status === 'error') {
+          // Show error message
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id.startsWith('ai-pending-')
+                ? {
+                    ...m,
+                    id: `ai-error-${Date.now()}`,
+                    content: data.error || 'Có lỗi khi tạo phản hồi',
+                  }
+                : m
+            )
+          );
+          setIsStreaming(false);
+          toastError(data.error || 'Có lỗi khi tạo phản hồi từ AI');
+        }
+      }
+    };
+
+    // Handle message status updates
+    const handleMessageStatus = (data: {
+      sessionId: string;
+      messageId: string;
+      status: 'pending' | 'processing' | 'completed' | 'error';
+    }) => {
+      if (currentSession?.id === data.sessionId) {
+        if (data.status === 'processing') {
+          setIsStreaming(true);
+        } else if (data.status === 'completed' || data.status === 'error') {
+          setIsStreaming(false);
+        }
+      }
+    };
+
+    // Subscribe to events
+    websocketService.onAIResponse(handleAIResponse);
+    websocketService.onMessageStatus(handleMessageStatus);
+
+    // Cleanup on unmount
+    return () => {
+      websocketService.offAIResponse(handleAIResponse);
+      websocketService.offMessageStatus(handleMessageStatus);
+      websocketService.disconnect();
+    };
+  }, [currentSession?.id]);
 
   // Create new session
   const createNewSession = useCallback(
@@ -219,7 +319,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           },
         ]);
 
-        // Send to AI
+        // Send to AI (response will come via WebSocket for realtime updates)
+        // But we still wait for HTTP response as fallback
         const response = await chatService.sendMessage({
           message: content,
           sessionId: sessionIdForSend,
@@ -227,21 +328,37 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           images: images,
         });
 
-        // Replace placeholder with AI response
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === placeholderId
-              ? {
-                  id: `ai-${Date.now()}`,
-                  role: "assistant",
-                  content: response.aiMessage.content,
-                  timestamp: new Date().toISOString(),
-                  tokens: response.aiMessage.tokens,
-                  model: response.aiMessage.model,
-                }
-              : m
-          )
-        );
+        // If WebSocket didn't update the message (fallback after 2 seconds), update manually
+        // This ensures compatibility if WebSocket fails
+        setTimeout(() => {
+          setMessages((prev) => {
+            const hasAIResponse = prev.some(
+              (m) =>
+                (m.id === response.aiMessage.id ||
+                  m.id === response.aiMessage._id ||
+                  m.id === placeholderId) &&
+                m.content.length > 0
+            );
+            if (!hasAIResponse) {
+              return prev.map((m) =>
+                m.id === placeholderId
+                  ? {
+                      id:
+                        response.aiMessage.id ||
+                        response.aiMessage._id ||
+                        `ai-${Date.now()}`,
+                      role: "assistant",
+                      content: response.aiMessage.content,
+                      timestamp: new Date().toISOString(),
+                      tokens: response.aiMessage.tokens,
+                      model: response.aiMessage.model,
+                    }
+                  : m
+              );
+            }
+            return prev;
+          });
+        }, 2000);
 
         // Update current session if it was created
         if (response.userMessage && !currentSession) {

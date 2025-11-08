@@ -146,9 +146,14 @@ class ChatService {
     return response.data;
   }
 
+  /**
+   * Upload image - sử dụng direct upload lên Cloudinary (nhanh hơn)
+   * Fallback về legacy endpoint nếu direct upload thất bại
+   */
   async uploadImage(
     file: File,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
+    useDirectUpload: boolean = true, // Mặc định dùng direct upload
   ): Promise<{
     url: string;
     publicId?: string;
@@ -159,15 +164,42 @@ class ChatService {
     mimeType: string;
     filename: string;
   }> {
-    const formData = new FormData();
-    formData.append("image", file);
+    // Thử direct upload trước (nhanh hơn, không qua BE)
+    if (useDirectUpload) {
+      try {
+        const { cloudinaryUploadService } = await import(
+          './cloudinary-upload.service'
+        );
+        const result = await cloudinaryUploadService.uploadDirect(
+          file,
+          onProgress,
+        );
 
-    // Không set Content-Type thủ công - để axios tự động detect FormData và set boundary
-    const response = await apiService.post("/chat/upload-image", formData, {
+        return {
+          url: result.secure_url || result.url,
+          publicId: result.public_id,
+          width: result.width,
+          height: result.height,
+          size: result.bytes,
+          format: result.format,
+          mimeType: file.type,
+          filename: file.name,
+        };
+      } catch (error) {
+        console.warn('Direct upload failed, falling back to legacy:', error);
+        // Fallback về legacy endpoint
+      }
+    }
+
+    // Legacy: upload qua BE
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await apiService.post('/chat/upload-image', formData, {
       onUploadProgress: (progressEvent) => {
         if (onProgress && progressEvent.total) {
           const progress = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
+            (progressEvent.loaded * 100) / progressEvent.total,
           );
           onProgress(progress);
         }

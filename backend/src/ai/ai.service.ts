@@ -14,7 +14,12 @@ export interface AIModel {
 export interface MultimodalMessage {
   role: 'user' | 'assistant';
   content: string;
-  images?: { base64?: string; url?: string; mimeType?: string }[];
+  images?: {
+    base64?: string;
+    url?: string;
+    publicId?: string; // Cloudinary public_id (ưu tiên)
+    mimeType?: string;
+  }[];
 }
 
 @Injectable()
@@ -99,7 +104,17 @@ export class AIService {
 
       if (msg.images && msg.images.length > 0) {
         for (const image of msg.images) {
-          if (image.base64) {
+          // Ưu tiên publicId (Cloudinary direct upload)
+          if (image.publicId) {
+            const cloudName = this.googleAIService.getCloudName();
+            parts.push(
+              this.googleAIService.convertCloudinaryPublicIdToPart(
+                image.publicId,
+                cloudName,
+                image.mimeType,
+              ),
+            );
+          } else if (image.base64) {
             parts.push(
               this.googleAIService.convertImageToPart(
                 image.base64,
@@ -107,11 +122,21 @@ export class AIService {
               ),
             );
           } else if (image.url) {
-            const part = await this.googleAIService.fetchImageUrlToPart(
-              image.url,
-              image.mimeType,
-            );
-            parts.push(part);
+            // Nếu là Cloudinary URL, optimize nó
+            if (image.url.includes('res.cloudinary.com')) {
+              parts.push(
+                this.googleAIService.convertCloudinaryUrlToPart(
+                  image.url,
+                  image.mimeType,
+                ),
+              );
+            } else {
+              const part = await this.googleAIService.fetchImageUrlToPart(
+                image.url,
+                image.mimeType,
+              );
+              parts.push(part);
+            }
           }
         }
       }

@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -20,6 +22,7 @@ import {
 } from '../database/schemas/ai-settings.schema';
 import { AIService } from '../ai/ai.service';
 import { SendMessageDto, CreateSessionDto } from './dto';
+import { ChatGateway } from './gateways/chat.gateway';
 
 @Injectable()
 export class ChatService {
@@ -30,6 +33,8 @@ export class ChatService {
     @InjectModel(AISettings.name)
     private aiSettingsModel: Model<AISettingsDocument>,
     private aiService: AIService,
+    @Inject(forwardRef(() => ChatGateway))
+    private chatGateway: ChatGateway,
   ) {}
 
   private ensureValidObjectId(id: string, fieldName = 'id') {
@@ -211,6 +216,14 @@ export class ChatService {
         aiResponse = await this.aiService.generateResponse(textMessages);
       }
 
+      // Emit processing status via WebSocket
+      this.chatGateway.emitMessageStatus(
+        userId,
+        sessionId,
+        userMessage._id.toString(),
+        'processing',
+      );
+
       // Create AI message
       const aiMessage = new this.messageModel({
         sessionId: new Types.ObjectId(sessionId),
@@ -233,6 +246,24 @@ export class ChatService {
         $push: { messages: [userMessage._id, aiMessage._id] },
       });
 
+      // Emit AI response via WebSocket (realtime)
+      this.chatGateway.emitAIResponse(userId, {
+        sessionId,
+        messageId: aiMessage._id.toString(),
+        content: aiResponse.content,
+        tokens: aiResponse.tokens,
+        model: sendMessageDto.model || session.aiModel,
+        status: 'completed',
+      });
+
+      // Emit completed status
+      this.chatGateway.emitMessageStatus(
+        userId,
+        sessionId,
+        userMessage._id.toString(),
+        'completed',
+      );
+
       return { userMessage, aiMessage };
     } catch (error) {
       // If AI fails, still save user message
@@ -240,6 +271,22 @@ export class ChatService {
         lastMessageAt: new Date(),
         $inc: { messageCount: 1 },
         $push: { messages: userMessage._id },
+      });
+
+      // Emit error status via WebSocket
+      this.chatGateway.emitMessageStatus(
+        userId,
+        sessionId,
+        userMessage._id.toString(),
+        'error',
+      );
+
+      this.chatGateway.emitAIResponse(userId, {
+        sessionId,
+        messageId: `error-${Date.now()}`,
+        content: '',
+        status: 'error',
+        error: error.message || 'Không thể tạo phản hồi từ AI',
       });
 
       throw new BadRequestException(
