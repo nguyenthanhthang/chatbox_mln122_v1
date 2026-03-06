@@ -38,7 +38,17 @@ const ChatWithAutoLogout: React.FC = () => {
   return <ChatInterface />;
 };
 
-const muiTheme = createTheme();
+const muiTheme = createTheme({
+  typography: {
+    fontFamily: '"Be Vietnam Pro", "Roboto", "Helvetica", "Arial", sans-serif',
+    h1: { fontFamily: '"Source Serif 4", "Georgia", serif' },
+    h2: { fontFamily: '"Source Serif 4", "Georgia", serif' },
+    h3: { fontFamily: '"Source Serif 4", "Georgia", serif' },
+    h4: { fontFamily: '"Source Serif 4", "Georgia", serif' },
+    h5: { fontFamily: '"Source Serif 4", "Georgia", serif' },
+    h6: { fontFamily: '"Source Serif 4", "Georgia", serif' },
+  },
+});
 
 function App() {
   return (

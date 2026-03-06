@@ -11,6 +11,7 @@ import {
   keyframes,
 } from "@mui/material";
 import { SmartToy, MenuBook } from "@mui/icons-material";
+import { ScrollRevealSection } from "../../components/info/ScrollRevealSection";
 
 // Animations
 const fadeInUp = keyframes`
@@ -45,15 +46,11 @@ const gradientShift = keyframes`
   100% { background-position: 0% 50%; }
 `;
 
-const flipIn = keyframes`
-  from {
-    opacity: 0;
-    transform: perspective(800px) rotateY(-15deg) translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: perspective(800px) rotateY(0) translateX(0);
-  }
+const blobFloat = keyframes`
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(10px, -20px) scale(1.05); }
+  50% { transform: translate(-15px, 10px) scale(0.95); }
+  75% { transform: translate(20px, 15px) scale(1.02); }
 `;
 
 // Nội dung các khối - có thể thay ảnh bằng đường dẫn thực tế
@@ -104,7 +101,7 @@ const PartyInfo: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#f8f6f3", pb: 6 }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#f8f6f3", pb: 6, position: "relative" }}>
       {/* Nút AI VNR - fixed */}
       <Button
         variant="contained"
@@ -132,7 +129,56 @@ const PartyInfo: React.FC = () => {
         AI VNR
       </Button>
 
-      <Container maxWidth="lg" sx={{ py: 6 }}>
+      {/* Layout: Sidebar trái | Nội dung | Sidebar phải */}
+      <Box
+        sx={{
+          display: "flex",
+          width: "100%",
+          maxWidth: 1600,
+          mx: "auto",
+          position: "relative",
+          zIndex: 2,
+        }}
+      >
+        {/* Sidebar trái - Mục lục Chương 4 (sticky + hiệu ứng trượt từ trái) */}
+        <Box
+          sx={{
+            display: { xs: "none", lg: "block" },
+            width: 300,
+            flexShrink: 0,
+            pl: 3,
+            pt: 6,
+            alignSelf: "flex-start",
+            position: "sticky",
+            top: 100,
+          }}
+        >
+          <ScrollRevealSection direction="left">
+          <Paper
+            elevation={4}
+            sx={{
+              p: 3.5,
+              borderRadius: 2.5,
+              bgcolor: "#fff",
+              border: "1px solid rgba(255,107,107,0.2)",
+            }}
+          >
+            <Typography variant="subtitle1" fontWeight={700} sx={{ color: "#FF6B6B", mb: 2, fontSize: "1rem" }}>
+              MỤC LỤC CHƯƠNG 4
+            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              {["II. Nhà nước XHCN", "III. Dân chủ & Nhà nước pháp quyền", "1. Dân chủ XHCN ở VN", "2. Nhà nước pháp quyền XHCN", "3. Phát huy dân chủ hiện nay"].map((item, i) => (
+                <Typography key={i} variant="body2" sx={{ color: "text.secondary", fontSize: "0.95rem", lineHeight: 1.5 }}>
+                  • {item}
+                </Typography>
+              ))}
+            </Box>
+          </Paper>
+          </ScrollRevealSection>
+        </Box>
+
+        {/* Nội dung chính */}
+        <Container maxWidth="lg" sx={{ py: 6, flex: 1, minWidth: 0, px: { xs: 2, sm: 3 } }}>
         {/* Hero - Bìa sách */}
         <Paper
           elevation={8}
@@ -199,35 +245,32 @@ const PartyInfo: React.FC = () => {
           </Box>
         </Paper>
 
-        {/* Các khối nội dung - xen kẽ, kiểu lật sách */}
-        {sections.map((section, index) => (
-          <Paper
-            key={section.id}
-            elevation={4}
-            sx={{
-              mb: 4,
-              borderRadius: 3,
-              overflow: "hidden",
-              display: "flex",
-              flexDirection: { xs: "column", md: section.imageLeft ? "row" : "row-reverse" },
-              animation: `${flipIn} 0.8s ease-out`,
-              animationDelay: `${index * 0.1}s`,
-              animationFillMode: "both",
-              transition: "transform 0.3s ease, box-shadow 0.3s ease",
-              "&:hover": {
-                boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
-                transform: "translateY(-4px)",
-              },
-            }}
-          >
-            {/* Ảnh */}
-            <Box
+        {/* Các khối nội dung - xen kẽ, hiệu ứng scroll reveal */}
+        {sections.map((section) => (
+          <ScrollRevealSection key={section.id}>
+            <Paper
+              elevation={4}
               sx={{
-                width: { xs: "100%", md: "45%" },
-                minHeight: { xs: 220, md: 280 },
-                flexShrink: 0,
+                mb: 4,
+                borderRadius: 3,
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: { xs: "column", md: section.imageLeft ? "row" : "row-reverse" },
+                transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                "&:hover": {
+                  boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
+                  transform: "translateY(-4px)",
+                },
               }}
             >
+              {/* Ảnh */}
+              <Box
+                sx={{
+                  width: { xs: "100%", md: "45%" },
+                  minHeight: { xs: 260, md: 340 },
+                  flexShrink: 0,
+                }}
+              >
               <Box
                 component="img"
                 src={section.image}
@@ -249,7 +292,7 @@ const PartyInfo: React.FC = () => {
             <Box
               sx={{
                 flex: 1,
-                p: 4,
+                p: { xs: 3, md: 4.5 },
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
@@ -282,6 +325,7 @@ const PartyInfo: React.FC = () => {
               </Typography>
             </Box>
           </Paper>
+          </ScrollRevealSection>
         ))}
 
         <Divider sx={{ my: 4 }}>
@@ -341,7 +385,82 @@ const PartyInfo: React.FC = () => {
             </Typography>
           </Box>
         </Paper>
-      </Container>
+        </Container>
+
+        {/* Sidebar phải - Quảng cáo AI VNR (sticky + hiệu ứng trượt từ phải) */}
+        <Box
+          sx={{
+            display: { xs: "none", lg: "block" },
+            width: 340,
+            flexShrink: 0,
+            pr: 3,
+            pt: 6,
+            alignSelf: "flex-start",
+            position: "sticky",
+            top: 100,
+          }}
+        >
+          <ScrollRevealSection direction="right">
+          <Paper
+            elevation={6}
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              overflow: "hidden",
+              background: "linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%)",
+              border: "1px solid rgba(255,255,255,0.3)",
+            }}
+          >
+            <Box sx={{ textAlign: "center", mb: 2.5 }}>
+              <Box
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 72,
+                  height: 72,
+                  borderRadius: "50%",
+                  bgcolor: "rgba(255,255,255,0.35)",
+                  mb: 2,
+                }}
+              >
+                <SmartToy sx={{ fontSize: 36, color: "#fff" }} />
+              </Box>
+              <Typography variant="h6" fontWeight={700} sx={{ color: "#fff", fontSize: "1.5rem" }}>
+                AI VNR
+              </Typography>
+              <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.95)", mt: 0.5, fontSize: "1rem" }}>
+                Trợ lý AI hỏi đáp 24/7
+              </Typography>
+            </Box>
+            <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.9)", fontSize: "1rem", lineHeight: 1.7, mb: 2.5 }}>
+              Trao đổi, hỏi đáp về nội dung học tập với chatbot thông minh. Đăng nhập để trải nghiệm ngay.
+            </Typography>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={() => navigate("/login")}
+              startIcon={<SmartToy />}
+              sx={{
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: "1rem",
+                bgcolor: "#fff",
+                color: "#FF6B6B",
+                "&:hover": {
+                  bgcolor: "rgba(255,255,255,0.95)",
+                  color: "#E85A5A",
+                },
+              }}
+            >
+              Đăng nhập / Đăng ký
+            </Button>
+          </Paper>
+          </ScrollRevealSection>
+        </Box>
+      </Box>
     </Box>
   );
 };
