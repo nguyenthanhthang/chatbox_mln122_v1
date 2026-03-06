@@ -10,7 +10,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
 
-  const roleLabel = isUser ? "Bạn" : isAssistant ? "Triết gia AI" : "System";
+  const roleLabel = isUser ? "Bạn" : isAssistant ? "AI VNR" : "System";
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} animate-slide-in-message`}>

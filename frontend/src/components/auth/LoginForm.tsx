@@ -155,10 +155,10 @@ const LoginForm: React.FC = () => {
                   WebkitTextFillColor: "transparent",
                 }}
               >
-                Chatbot Triết Học
+                Chatbot VNR
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Đăng nhập để khám phá trí tuệ
+                Đăng nhập để khám phá AI VNR
               </Typography>
             </Box>
 

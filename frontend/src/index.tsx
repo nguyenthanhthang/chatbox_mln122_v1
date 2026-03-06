@@ -32,8 +32,10 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <App />
-    <ToastContainer position="top-right" autoClose={5000} theme="light" />
+    <>
+      <App />
+      <ToastContainer position="top-right" autoClose={5000} theme="light" />
+    </>
   </React.StrictMode>
 );
 

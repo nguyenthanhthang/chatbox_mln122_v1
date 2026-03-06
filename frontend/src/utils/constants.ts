@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
 
 export const ROUTES = {
   HOME: "/",
+  INFO: "/info",
   LOGIN: "/login",
   REGISTER: "/register",
   DASHBOARD: "/dashboard",

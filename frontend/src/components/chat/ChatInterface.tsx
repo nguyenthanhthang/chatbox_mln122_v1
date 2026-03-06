@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useChat } from "../../context/ChatContext";
 import { useAuth } from "../../context/AuthContext";
+import { ImageMetadata } from "../../types/image.types";
 import MessageList from "./MessageList";
 import InputBox from "./InputBox";
 import Sidebar from "./Sidebar";
@@ -67,20 +68,21 @@ const ChatInterface: React.FC = () => {
 
   const handleSendMessage = async (
     content: string,
-    images?: { url?: string; base64?: string; mimeType: string }[]
+    images?: ImageMetadata[]
   ) => {
     try {
       const imageData = images
         ?.map((img) => {
-          if (img.url) {
-            return { url: img.url, mimeType: img.mimeType };
+          const mimeType = img.mimeType || "image/jpeg";
+          if (img.url || img.publicId) {
+            return { url: img.url, publicId: img.publicId, mimeType };
           }
           if (img.base64) {
             return {
               base64: img.base64.includes(",")
                 ? img.base64.split(",")[1]
                 : img.base64,
-              mimeType: img.mimeType,
+              mimeType,
             };
           }
           return undefined as any;
@@ -149,10 +151,10 @@ const ChatInterface: React.FC = () => {
                   </div>
                 </div>
                 <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-red-600 to-yellow-600 dark:from-red-400 dark:to-yellow-400 bg-clip-text text-transparent animate-slide-up">
-                  Chatbot Triết Học
+                  Chatbot VNR
                 </h1>
                 <p className="text-xl text-gray-700 dark:text-gray-300 mb-8 animate-slide-up animation-delay-200">
-                  Bắt đầu cuộc trò chuyện với trí tuệ nhân tạo
+                  Bắt đầu cuộc trò chuyện với AI VNR
                 </p>
                 <button
                   onClick={handleNewChat}
