@@ -110,7 +110,12 @@ export class GoogleAIService {
             parts: msg.parts,
           })),
           ...(systemPrompt
-            ? { systemInstruction: systemPrompt }
+            ? {
+                systemInstruction: {
+                  role: 'user',
+                  parts: [{ text: systemPrompt }],
+                },
+              }
             : {}),
           generationConfig: {
             temperature: 0.7,
@@ -179,7 +184,12 @@ export class GoogleAIService {
             parts: msg.parts,
           })),
           ...(systemPrompt
-            ? { systemInstruction: systemPrompt }
+            ? {
+                systemInstruction: {
+                  role: 'user',
+                  parts: [{ text: systemPrompt }],
+                },
+              }
             : {}),
           generationConfig: {
             temperature: 0.7,
