@@ -76,130 +76,170 @@ export class GoogleAIService {
     });
   }
 
+  /** Kiểm tra lỗi rate limit (429 / RetryInfo) */
+  private isRateLimitError(error: any): boolean {
+    const msg = String(error?.message || '');
+    return (
+      error?.status === 429 ||
+      msg.includes('429') ||
+      msg.includes('RESOURCE_EXHAUSTED') ||
+      msg.includes('RetryInfo') ||
+      msg.includes('rate limit') ||
+      msg.includes('quota')
+    );
+  }
+
+  /** Chờ ms milliseconds */
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   async generateTextResponse(
     messages: GoogleAIMessage[],
     systemPrompt?: string,
   ): Promise<GoogleAIResponse> {
-    try {
-      const chat = this.textModel.startChat({
-        history: messages.slice(0, -1).map((msg) => ({
-          role: msg.role,
-          parts: msg.parts,
-        })),
-        // Apply a system instruction if provided
-        ...(systemPrompt
-          ? {
-              systemInstruction: {
-                role: 'user',
-                parts: [{ text: systemPrompt }],
-              },
-            }
-          : {}),
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192,
-        },
-      });
+    const maxRetries = 2;
+    let lastError: any;
 
-      const lastMessage = messages[messages.length - 1];
-      const result = await chat.sendMessage(lastMessage.parts);
-      const response = result.response;
-      const text = response.text();
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const chat = this.textModel.startChat({
+          history: messages.slice(0, -1).map((msg) => ({
+            role: msg.role,
+            parts: msg.parts,
+          })),
+          ...(systemPrompt
+            ? {
+                systemInstruction: {
+                  role: 'user',
+                  parts: [{ text: systemPrompt }],
+                },
+              }
+            : {}),
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192,
+          },
+        });
 
-      // Get usage information
-      const usage = (response as any).usageMetadata || {};
+        const lastMessage = messages[messages.length - 1];
+        const result = await chat.sendMessage(lastMessage.parts);
+        const response = result.response;
+        const text = response.text();
+        const usage = (response as any).usageMetadata || {};
 
-      return {
-        content: text,
-        tokens: usage.totalTokenCount ?? 0,
-        model: 'gemini-2.0-flash',
-      };
-    } catch (error: any) {
-      this.logger.error('Error generating text response:', error);
-      
-      // Check for API key errors specifically
-      if (
-        error?.message?.includes('API key not valid') || 
-        error?.message?.includes('API_KEY_INVALID') ||
-        error?.errorDetails?.some((d: any) => d.reason === 'API_KEY_INVALID') ||
-        error?.status === 400 && error?.message?.includes('API')
-      ) {
-        this.logger.error('GOOGLE_AI_API_KEY không hợp lệ hoặc đã hết hạn.');
-        this.logger.error('Vui lòng kiểm tra:');
-        this.logger.error('  1. API key có đúng format không (bắt đầu với AIza...)');
-        this.logger.error('  2. API key có còn hoạt động không (kiểm tra trên Google AI Studio)');
-        this.logger.error('  3. API key đã được set đúng trong Render Environment Variables');
-        throw new Error('API key Google AI không hợp lệ. Vui lòng kiểm tra GOOGLE_AI_API_KEY trong Render Dashboard.');
+        return {
+          content: text,
+          tokens: usage.totalTokenCount ?? 0,
+          model: 'gemini-2.0-flash',
+        };
+      } catch (error: any) {
+        lastError = error;
+        this.logger.error(`Error generating text response (attempt ${attempt + 1}/${maxRetries + 1}):`, error?.message);
+
+        if (
+          error?.message?.includes('API key not valid') ||
+          error?.message?.includes('API_KEY_INVALID') ||
+          error?.errorDetails?.some((d: any) => d.reason === 'API_KEY_INVALID') ||
+          (error?.status === 400 && error?.message?.includes('API'))
+        ) {
+          this.logger.error('GOOGLE_AI_API_KEY không hợp lệ hoặc đã hết hạn.');
+          throw new Error('API key Google AI không hợp lệ. Vui lòng kiểm tra GOOGLE_AI_API_KEY trong Render Dashboard.');
+        }
+
+        if (this.isRateLimitError(error) && attempt < maxRetries) {
+          const delay = 15000;
+          this.logger.warn(`Rate limit hit, retry sau ${delay / 1000}s...`);
+          await this.sleep(delay);
+          continue;
+        }
+
+        const message = error instanceof Error ? error.message : String(error);
+        if (this.isRateLimitError(error)) {
+          throw new Error('API Google AI đang bị giới hạn tốc độ. Vui lòng thử lại sau 15–30 giây.');
+        }
+        throw new Error(`Tạo phản hồi văn bản từ Google AI thất bại: ${message}`);
       }
-      
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Tạo phản hồi văn bản từ Google AI thất bại: ${message}`);
     }
+
+    const message = lastError instanceof Error ? lastError.message : String(lastError);
+    throw new Error(`Tạo phản hồi văn bản từ Google AI thất bại: ${message}`);
   }
 
   async generateMultimodalResponse(
     messages: GoogleAIMessage[],
     systemPrompt?: string,
   ): Promise<GoogleAIResponse> {
-    try {
-      const chat = this.visionModel.startChat({
-        history: messages.slice(0, -1).map((msg) => ({
-          role: msg.role,
-          parts: msg.parts,
-        })),
-        // Apply a system instruction if provided
-        ...(systemPrompt
-          ? {
-              systemInstruction: {
-                role: 'user',
-                parts: [{ text: systemPrompt }],
-              },
-            }
-          : {}),
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192,
-        },
-      });
+    const maxRetries = 2;
+    let lastError: any;
 
-      const lastMessage = messages[messages.length - 1];
-      const result = await chat.sendMessage(lastMessage.parts);
-      const response = result.response;
-      const text = response.text();
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const chat = this.visionModel.startChat({
+          history: messages.slice(0, -1).map((msg) => ({
+            role: msg.role,
+            parts: msg.parts,
+          })),
+          ...(systemPrompt
+            ? {
+                systemInstruction: {
+                  role: 'user',
+                  parts: [{ text: systemPrompt }],
+                },
+              }
+            : {}),
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192,
+          },
+        });
 
-      // Get usage information
-      const usage = (response as any).usageMetadata || {};
+        const lastMessage = messages[messages.length - 1];
+        const result = await chat.sendMessage(lastMessage.parts);
+        const response = result.response;
+        const text = response.text();
+        const usage = (response as any).usageMetadata || {};
 
-      return {
-        content: text,
-        tokens: usage.totalTokenCount ?? 0,
-        model: 'gemini-2.0-flash',
-      };
-    } catch (error: any) {
-      this.logger.error('Error generating multimodal response:', error);
-      
-      // Check for API key errors specifically
-      if (
-        error?.message?.includes('API key not valid') || 
-        error?.message?.includes('API_KEY_INVALID') ||
-        error?.errorDetails?.some((d: any) => d.reason === 'API_KEY_INVALID') ||
-        error?.status === 400 && error?.message?.includes('API')
-      ) {
-        this.logger.error('GOOGLE_AI_API_KEY không hợp lệ hoặc đã hết hạn.');
-        this.logger.error('Vui lòng kiểm tra:');
-        this.logger.error('  1. API key có đúng format không (bắt đầu với AIza...)');
-        this.logger.error('  2. API key có còn hoạt động không (kiểm tra trên Google AI Studio)');
-        this.logger.error('  3. API key đã được set đúng trong Render Environment Variables');
-        throw new Error('API key Google AI không hợp lệ. Vui lòng kiểm tra GOOGLE_AI_API_KEY trong Render Dashboard.');
+        return {
+          content: text,
+          tokens: usage.totalTokenCount ?? 0,
+          model: 'gemini-2.0-flash',
+        };
+      } catch (error: any) {
+        lastError = error;
+        this.logger.error(`Error generating multimodal response (attempt ${attempt + 1}/${maxRetries + 1}):`, error?.message);
+
+        if (
+          error?.message?.includes('API key not valid') ||
+          error?.message?.includes('API_KEY_INVALID') ||
+          error?.errorDetails?.some((d: any) => d.reason === 'API_KEY_INVALID') ||
+          (error?.status === 400 && error?.message?.includes('API'))
+        ) {
+          this.logger.error('GOOGLE_AI_API_KEY không hợp lệ hoặc đã hết hạn.');
+          throw new Error('API key Google AI không hợp lệ. Vui lòng kiểm tra GOOGLE_AI_API_KEY trong Render Dashboard.');
+        }
+
+        if (this.isRateLimitError(error) && attempt < maxRetries) {
+          const delay = 15000;
+          this.logger.warn(`Rate limit hit, retry sau ${delay / 1000}s...`);
+          await this.sleep(delay);
+          continue;
+        }
+
+        const message = error instanceof Error ? error.message : String(error);
+        if (this.isRateLimitError(error)) {
+          throw new Error('API Google AI đang bị giới hạn tốc độ. Vui lòng thử lại sau 15–30 giây.');
+        }
+        throw new Error(`Tạo phản hồi đa phương tiện từ Google AI thất bại: ${message}`);
       }
-      
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Tạo phản hồi đa phương tiện từ Google AI thất bại: ${message}`);
     }
+
+    const message = lastError instanceof Error ? lastError.message : String(lastError);
+    throw new Error(`Tạo phản hồi đa phương tiện từ Google AI thất bại: ${message}`);
   }
 
   /**

@@ -68,7 +68,7 @@ class ApiService {
 
   // Auth endpoints
   async login(credentials: { email: string; password: string }) {
-    return this.api.post("/auth/login", credentials);
+    return this.api.post("/auth/login", credentials, { timeout: 30000 });
   }
 
   async register(userData: {
@@ -77,7 +77,8 @@ class ApiService {
     firstName: string;
     lastName: string;
   }) {
-    return this.api.post("/auth/register", userData);
+    // Timeout 30s cho Render free tier (cold start ~30-60s)
+    return this.api.post("/auth/register", userData, { timeout: 30000 });
   }
 
   async logout() {

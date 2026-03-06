@@ -52,7 +52,22 @@ export class AuthService {
       const response = await apiService.register(userData);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Đăng ký thất bại");
+      // Log chi tiết để debug
+      console.error("[AuthService] Register error:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+        code: error.code,
+      });
+      const msg = error.response?.data?.message;
+      if (msg) throw new Error(msg);
+      if (error.code === "ERR_NETWORK" || !error.response) {
+        throw new Error("Không thể kết nối server. Kiểm tra mạng hoặc backend đã chạy chưa.");
+      }
+      if (error.code === "ECONNABORTED") {
+        throw new Error("Kết nối quá thời gian. Render free tier có thể đang khởi động.");
+      }
+      throw new Error(`Đăng ký thất bại (${error.response?.status || "lỗi"}): ${error.message}`);
     }
   }
 

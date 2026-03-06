@@ -97,9 +97,7 @@ const RegisterForm: React.FC = () => {
         lastName: rest.lastName,
       });
 
-      setSuccess(
-        "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản."
-      );
+      setSuccess("Đăng ký thành công! Bạn có thể đăng nhập ngay.");
       toastSuccess("Đăng ký thành công");
 
       // Redirect to login after 3 seconds
