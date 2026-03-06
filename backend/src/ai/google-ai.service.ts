@@ -20,7 +20,7 @@ export interface GoogleAIResponse {
 @Injectable()
 export class GoogleAIService {
   private readonly logger = new Logger(GoogleAIService.name);
-  private readonly modelId = 'gemini-1.5-flash';
+  private readonly modelId = 'gemini-2.5-flash';
   private genAI: GoogleGenerativeAI;
   private textModel: GenerativeModel;
   private visionModel: GenerativeModel;
