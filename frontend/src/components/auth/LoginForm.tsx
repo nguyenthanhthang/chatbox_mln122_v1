@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Box, Typography, Alert, Link, Paper, Container, Divider, IconButton, InputAdornment, keyframes } from "@mui/material";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
-import { Visibility, VisibilityOff, Email, Lock, Login as LoginIcon } from "@mui/icons-material";
+import { Visibility, VisibilityOff, Email, Lock, Login as LoginIcon, Home } from "@mui/icons-material";
 import { useAuth } from "../../hooks/useAuth";
 import { loginSchema } from "../../utils/validation";
 import { Button, Input } from "../common";
@@ -93,7 +93,27 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm">
+    <>
+      <IconButton
+        component={RouterLink}
+        to="/"
+        aria-label="Về trang chủ"
+        sx={{
+          position: "fixed",
+          top: 24,
+          left: 24,
+          zIndex: 1100,
+          bgcolor: "rgba(255,255,255,0.9)",
+          boxShadow: 2,
+          "&:hover": {
+            bgcolor: "#fff",
+            boxShadow: 4,
+          },
+        }}
+      >
+        <Home sx={{ color: "#FF6B6B", fontSize: 28 }} />
+      </IconButton>
+      <Container maxWidth="sm">
       <Box
         sx={{
           minHeight: "100vh",
@@ -313,6 +333,7 @@ const LoginForm: React.FC = () => {
         </Paper>
       </Box>
     </Container>
+    </>
   );
 };
 
