@@ -110,12 +110,7 @@ export class GoogleAIService {
             parts: msg.parts,
           })),
           ...(systemPrompt
-            ? {
-                systemInstruction: {
-                  role: 'user',
-                  parts: [{ text: systemPrompt }],
-                },
-              }
+            ? { systemInstruction: systemPrompt }
             : {}),
           generationConfig: {
             temperature: 0.7,
@@ -184,12 +179,7 @@ export class GoogleAIService {
             parts: msg.parts,
           })),
           ...(systemPrompt
-            ? {
-                systemInstruction: {
-                  role: 'user',
-                  parts: [{ text: systemPrompt }],
-                },
-              }
+            ? { systemInstruction: systemPrompt }
             : {}),
           generationConfig: {
             temperature: 0.7,
@@ -244,23 +234,16 @@ export class GoogleAIService {
   }
 
   /**
-   * Convert Cloudinary public_id to optimized URL for Gemini
-   * Dùng URL transform để giảm kích thước (max 1024px) và tối ưu format
+   * Convert Cloudinary public_id thành Part (base64) cho Gemini.
+   * Gemini yêu cầu inlineData là base64, không chấp nhận URL.
    */
-  convertCloudinaryPublicIdToPart(
+  async fetchCloudinaryPublicIdToPart(
     publicId: string,
     cloudName: string,
     mimeType?: string,
-  ): Part {
-    // Tạo URL transform: f_auto (auto format), q_auto (auto quality), w_1024 (max width 1024)
-    // Gemini có thể fetch từ URL trực tiếp, không cần download
-    const optimizedUrl = `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_1024,h_1024,c_limit/${publicId}`;
-    return {
-      inlineData: {
-        data: optimizedUrl, // Gemini sẽ tự fetch từ URL này
-        mimeType: mimeType || 'image/jpeg',
-      },
-    };
+  ): Promise<Part> {
+    const url = `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_1024,h_1024,c_limit/${publicId}`;
+    return this.fetchImageUrlToPart(url, mimeType);
   }
 
   /**

@@ -76,14 +76,29 @@ export class AIService {
   private async generateGoogleResponse(
     messages: Array<{ role: string; content: string }>,
   ): Promise<{ content: string; tokens: number }> {
-    const googleMessages: GoogleAIMessage[] = messages.map((msg) => ({
-      // Google API expects roles: 'user' | 'model'
+    // Tách system prompt và lọc message rỗng
+    let systemPrompt: string | undefined;
+    const filtered = messages.filter((msg) => {
+      if (msg.role === 'system') {
+        if (msg.content?.trim()) systemPrompt = msg.content.trim();
+        return false;
+      }
+      return (msg.content ?? '').trim().length > 0;
+    });
+
+    const googleMessages: GoogleAIMessage[] = filtered.map((msg) => ({
       role: (msg.role === 'assistant' ? 'model' : 'user') as 'user' | 'model',
       parts: [{ text: msg.content }],
     }));
 
-    const response =
-      await this.googleAIService.generateTextResponse(googleMessages);
+    if (googleMessages.length === 0) {
+      throw new Error('Không có nội dung tin nhắn để gửi');
+    }
+
+    const response = await this.googleAIService.generateTextResponse(
+      googleMessages,
+      systemPrompt,
+    );
     return {
       content: response.content,
       tokens: response.tokens,
@@ -93,9 +108,18 @@ export class AIService {
   private async generateGoogleMultimodalResponse(
     messages: MultimodalMessage[],
   ): Promise<{ content: string; tokens: number }> {
+    let systemPrompt: string | undefined;
+    const filtered = messages.filter((msg) => {
+      if ((msg as { role?: string }).role === 'system') {
+        if (msg.content?.trim()) systemPrompt = msg.content.trim();
+        return false;
+      }
+      return (msg.content?.trim()?.length ?? 0) > 0 || (msg.images?.length ?? 0) > 0;
+    });
+
     const googleMessages: GoogleAIMessage[] = [];
 
-    for (const msg of messages) {
+    for (const msg of filtered) {
       const parts: any[] = [];
 
       if (msg.content) {
@@ -107,13 +131,12 @@ export class AIService {
           // Ưu tiên publicId (Cloudinary direct upload)
           if (image.publicId) {
             const cloudName = this.googleAIService.getCloudName();
-            parts.push(
-              this.googleAIService.convertCloudinaryPublicIdToPart(
-                image.publicId,
-                cloudName,
-                image.mimeType,
-              ),
+            const part = await this.googleAIService.fetchCloudinaryPublicIdToPart(
+              image.publicId,
+              cloudName,
+              image.mimeType,
             );
+            parts.push(part);
           } else if (image.base64) {
             parts.push(
               this.googleAIService.convertImageToPart(
@@ -141,14 +164,22 @@ export class AIService {
         }
       }
 
-      googleMessages.push({
-        role: (msg.role === 'assistant' ? 'model' : 'user') as 'user' | 'model',
-        parts,
-      });
+      if (parts.length > 0) {
+        googleMessages.push({
+          role: (msg.role === 'assistant' ? 'model' : 'user') as 'user' | 'model',
+          parts,
+        });
+      }
     }
 
-    const response =
-      await this.googleAIService.generateMultimodalResponse(googleMessages);
+    if (googleMessages.length === 0) {
+      throw new Error('Không có nội dung tin nhắn hoặc ảnh để gửi');
+    }
+
+    const response = await this.googleAIService.generateMultimodalResponse(
+      googleMessages,
+      systemPrompt,
+    );
     return {
       content: response.content,
       tokens: response.tokens,
