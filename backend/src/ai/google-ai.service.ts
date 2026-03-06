@@ -16,7 +16,7 @@ export interface GoogleAIResponse {
   tokens: number;
   model: string;
 }
-
+//demo
 @Injectable()
 export class GoogleAIService {
   private readonly logger = new Logger(GoogleAIService.name);
