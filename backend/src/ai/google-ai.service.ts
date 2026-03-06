@@ -20,6 +20,7 @@ export interface GoogleAIResponse {
 @Injectable()
 export class GoogleAIService {
   private readonly logger = new Logger(GoogleAIService.name);
+  private readonly modelId = 'gemini-1.5-flash';
   private genAI: GoogleGenerativeAI;
   private textModel: GenerativeModel;
   private visionModel: GenerativeModel;
@@ -54,10 +55,10 @@ export class GoogleAIService {
       this.logger.warn(`API key bắt đầu với: ${trimmedKey.substring(0, 4)}`);
     }
 
-    // Use broadly supported models on v1beta
+    // Dùng gemini-1.5-flash vì gemini-2.0-flash free tier thường báo limit: 0
     this.genAI = new GoogleGenerativeAI(trimmedKey);
     this.textModel = this.genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: this.modelId,
       generationConfig: {
         temperature: 0.7,
         topK: 40,
@@ -66,7 +67,7 @@ export class GoogleAIService {
       },
     });
     this.visionModel = this.genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: this.modelId,
       generationConfig: {
         temperature: 0.7,
         topK: 40,
@@ -133,7 +134,7 @@ export class GoogleAIService {
         return {
           content: text,
           tokens: usage.totalTokenCount ?? 0,
-          model: 'gemini-2.0-flash',
+          model: this.modelId,
         };
       } catch (error: any) {
         lastError = error;
@@ -207,7 +208,7 @@ export class GoogleAIService {
         return {
           content: text,
           tokens: usage.totalTokenCount ?? 0,
-          model: 'gemini-2.0-flash',
+          model: this.modelId,
         };
       } catch (error: any) {
         lastError = error;
@@ -371,20 +372,20 @@ export class GoogleAIService {
     };
   }
 
-  // Get available models
+  // Get available models (gemini-1.5-flash mặc định vì free tier ổn định hơn gemini-2.0-flash)
   getAvailableModels() {
     return [
       {
-        id: 'gemini-2.0-flash',
-        name: 'Gemini 2.0 Flash',
+        id: 'gemini-1.5-flash',
+        name: 'Gemini 1.5 Flash (mặc định)',
         provider: 'google',
         maxTokens: 8192,
         supportsImages: true,
         supportsText: true,
       },
       {
-        id: 'gemini-1.5-flash',
-        name: 'Gemini 1.5 Flash',
+        id: 'gemini-2.0-flash',
+        name: 'Gemini 2.0 Flash',
         provider: 'google',
         maxTokens: 8192,
         supportsImages: true,
