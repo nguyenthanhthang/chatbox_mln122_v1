@@ -164,7 +164,7 @@ const PartyInfo: React.FC = () => {
         <Paper
           elevation={8}
           sx={{
-            p: 4,
+            p: { xs: 3, md: 4.5 },
             mb: 6,
             borderRadius: 3,
             overflow: "hidden",
@@ -217,8 +217,8 @@ const PartyInfo: React.FC = () => {
               variant="h5"
               fontWeight={600}
               sx={{
-                color: "rgba(255,255,255,0.95)",
-                fontSize: { xs: "1.1rem", sm: "1.35rem" },
+                color: "rgba(255,255,255,0.98)",
+                fontSize: { xs: "1.15rem", sm: "1.4rem" },
               }}
             >
               Dân chủ xã hội chủ nghĩa và Nhà nước xã hội chủ nghĩa
@@ -334,7 +334,7 @@ const PartyInfo: React.FC = () => {
             onClick={() => navigate("/login")}
             fullWidth
             sx={{
-              py: 1.5,
+              py: 1.6,
               borderRadius: 2,
               textTransform: "none",
               fontSize: "1rem",
@@ -350,7 +350,7 @@ const PartyInfo: React.FC = () => {
               },
             }}
           >
-            Đăng nhập để dùng AI VNR
+            Đăng nhập để trải nghiệm AI VNR
           </Button>
           <Box textAlign="center" sx={{ mt: 2 }}>
             <Typography variant="body2" color="text.secondary">
