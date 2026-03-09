@@ -32,7 +32,8 @@ export class UsersController {
   @Get('profile')
   async getProfile(@CurrentUser() user: any) {
     const profile = await this.usersService.findById(user._id);
-    const p = profile.toObject ? profile.toObject() : profile;
+    const doc = profile as any;
+    const p = doc?.toObject?.() ?? doc;
     return { ...p, id: p._id || p.id };
   }
 
