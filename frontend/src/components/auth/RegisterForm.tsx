@@ -173,7 +173,7 @@ const RegisterForm: React.FC = () => {
                   WebkitTextFillColor: "transparent",
                 }}
               >
-                Chatbot VNR
+                Chatbot MLN131
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 Tạo tài khoản để bắt đầu hành trình

@@ -1,448 +1,459 @@
-import React from "react";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
-import {
-  Box,
-  Typography,
-  Button,
-  Paper,
-  Container,
-  Divider,
-  Link,
-  keyframes,
-} from "@mui/material";
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { SmartToy, MenuBook } from "@mui/icons-material";
-import { ScrollRevealSection } from "../../components/info/ScrollRevealSection";
+import Lenis from "lenis";
 
-const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
-`;
+function cn(...classes: (string | undefined | null | false)[]) {
+  return classes.filter(Boolean).join(" ");
+}
 
-const pulse = keyframes`
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-`;
+function Magnetic({ children, onHover, onLeave }: { children: React.ReactElement, onHover?: () => void, onLeave?: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const springConfig = { damping: 15, stiffness: 150, mass: 0.1 };
+  const springX = useSpring(x, springConfig);
+  const springY = useSpring(y, springConfig);
 
-const rotate = keyframes`
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-`;
+  const handleMouse = (e: React.MouseEvent<HTMLDivElement>) => {
+    const { clientX, clientY } = e;
+    const { height, width, left, top } = ref.current!.getBoundingClientRect();
+    const middleX = clientX - (left + width / 2);
+    const middleY = clientY - (top + height / 2);
+    x.set(middleX * 0.3);
+    y.set(middleY * 0.3);
+  };
 
-const gradientShift = keyframes`
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-`;
+  const reset = () => {
+    x.set(0);
+    y.set(0);
+    if (onLeave) onLeave();
+  };
 
-// Nội dung các khối - có thể thay ảnh bằng đường dẫn thực tế
+  return (
+    <motion.div
+      className="inline-block"
+      ref={ref}
+      onMouseMove={handleMouse}
+      onMouseLeave={reset}
+      onMouseEnter={onHover}
+      style={{ x: springX, y: springY }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+const SplitText = ({ text, delayOffset = 0 }: { text: string, delayOffset?: number }) => {
+  const words = text.split(" ");
+  return (
+    <span className="inline-block">
+      {words.map((word, i) => (
+        <span key={i} className="inline-block overflow-hidden mr-3">
+          <motion.span
+            className="inline-block"
+            initial={{ y: "100%", opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: delayOffset + i * 0.04 }}
+          >
+            {word}
+          </motion.span>
+        </span>
+      ))}
+    </span>
+  );
+};
+
+function HighlightedText({ children, onHover, onLeave }: { children: React.ReactNode, onHover?: () => void, onLeave?: () => void }) {
+  const spanRef = useRef<HTMLSpanElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setIsVisible(true); },
+      { threshold: 0.5 }
+    );
+    if (spanRef.current) observer.observe(spanRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <span
+      ref={spanRef}
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+      className="relative inline-block text-[#FFEA98] drop-shadow-[0_0_25px_rgba(255,234,152,0.6)] cursor-none z-30"
+    >
+      {children}
+      <svg
+        className="absolute -bottom-1 left-0 w-full h-4 overflow-visible"
+        viewBox="0 0 200 12"
+        preserveAspectRatio="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M0 8 Q50 2, 100 6 T200 8"
+          stroke="#FFEA98"
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+          className="transition-all duration-1000 ease-out"
+          style={{
+            strokeDasharray: 200,
+            strokeDashoffset: isVisible ? 0 : 200,
+            filter: "drop-shadow(0px 0px 8px rgba(255,234,152,0.8))",
+          }}
+        />
+      </svg>
+    </span>
+  );
+}
+
 const sections = [
   {
     id: "ii",
-    title: "II. Nhà nước xã hội chủ nghĩa",
-    content:
-      "Nhà nước xã hội chủ nghĩa là nhà nước của Nhân dân, do Nhân dân và vì Nhân dân. Đây là kiểu nhà nước mới, thực hiện quản lý xã hội bằng pháp luật, bảo đảm quyền lợi của Nhân dân và hướng tới mục tiêu phát triển công bằng, tiến bộ.",
-    image: "/hinh1.jpg",
-    imageLeft: true,
+    title: "1. Tự do, dân chủ và Nhà nước Xã hội chủ nghĩa",
+    content: "Độc lập dân tộc phải gắn liền với chủ nghĩa xã hội. Nếu đất nước giành được độc lập nhưng nhân dân không có cuộc sống ấm no, tự do thì nền độc lập đó chưa trọn vẹn.",
+    image: "/party-img-order-1.jpg",
   },
   {
     id: "iii",
-    title: "III. Dân chủ xã hội chủ nghĩa và nhà nước pháp quyền xã hội chủ nghĩa ở Việt Nam",
-    content:
-      "Dân chủ xã hội chủ nghĩa và nhà nước pháp quyền xã hội chủ nghĩa là hai nội dung cốt lõi trong quá trình xây dựng hệ thống chính trị ở Việt Nam. Đây là cơ sở để phát huy quyền làm chủ của Nhân dân và nâng cao hiệu quả quản lý nhà nước.",
-    image: "/hinh2.png",
-    imageLeft: false,
+    title: "2. Tại sao lại là hình thức nhà nước này?",
+    content: "Việc lựa chọn con đường xã hội chủ nghĩa không phải cảm tính mà là kết quả phân tích sâu sắc điều kiện lịch sử, kinh tế, xã hội của Việt Nam.",
+    image: "/party-img-order-2.jpg",
   },
   {
     id: "1",
-    title: "1. Dân chủ xã hội chủ nghĩa ở Việt Nam",
-    content:
-      "Dân chủ xã hội chủ nghĩa ở Việt Nam là nền dân chủ bảo đảm quyền làm chủ của Nhân dân, gắn với pháp luật, kỷ cương và sự lãnh đạo của Đảng. Nền dân chủ này được thực hiện trong cả đời sống chính trị, kinh tế, văn hóa và xã hội.",
-    image: "/hinh3.jpg",
-    imageLeft: true,
+    title: "3. Cơ sở lý luận thực tiễn",
+    content: "Xuất phát từ một nước thuộc địa, nửa phong kiến, việc đi lên chủ nghĩa xã hội là con đường thiết thực với hoàn cảnh cụ thể nhất.",
+    image: "/party-img-order-3.jpg",
   },
   {
     id: "2",
-    title: "2. Nhà nước pháp quyền xã hội chủ nghĩa ở Việt Nam",
-    content:
-      "Nhà nước pháp quyền xã hội chủ nghĩa Việt Nam hoạt động trên cơ sở Hiến pháp và pháp luật, bảo đảm mọi quyền lực nhà nước thuộc về Nhân dân. Đây là nền tảng quan trọng để xây dựng xã hội ổn định, công bằng và phát triển.",
-    image: "/hinh4.jpg",
-    imageLeft: false,
-  },
-  {
-    id: "3",
-    title: "3. Phát huy dân chủ xã hội chủ nghĩa, xây dựng Nhà nước pháp quyền xã hội chủ nghĩa ở Việt Nam hiện nay",
-    content:
-      "Hiện nay, Việt Nam tiếp tục đẩy mạnh phát huy dân chủ, hoàn thiện pháp luật, cải cách hành chính và nâng cao hiệu quả quản lý nhà nước. Đây là yêu cầu quan trọng nhằm xây dựng bộ máy nhà nước trong sạch, vững mạnh và phục vụ Nhân dân tốt hơn.",
-    image: "/hinh4.jpg",
-    imageLeft: true,
+    title: "4. Nhà nước pháp quyền do toàn dân",
+    content: "Chủ nghĩa xã hội là chế độ do nhân dân làm chủ, vì nhân dân và phục vụ lợi ích của nhân dân, phù hợp với khát vọng giải phóng con người.",
+    image: "/party-img-order-4.jpg",
   },
 ];
 
 const PartyInfo: React.FC = () => {
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.25,
+      easing: (t) => 1 - Math.pow(1 - t, 4),
+      smoothWheel: true,
+      touchMultiplier: 2,
+    });
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+    return () => lenis.destroy();
+  }, []);
+
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [revealedImages, setRevealedImages] = useState<Set<string>>(new Set());
+  const imageRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = imageRefs.current.indexOf(entry.target as HTMLDivElement);
+            if (index !== -1) {
+              setRevealedImages((prev) => new Set(prev).add(sections[index].id));
+            }
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    imageRefs.current.forEach((ref) => { if (ref) observer.observe(ref); });
+    return () => observer.disconnect();
+  }, []);
+
+  const cursorX = useMotionValue(-100);
+  const cursorY = useMotionValue(-100);
+  const springConfig = { damping: 25, stiffness: 350, mass: 0.1 };
+  const cursorXSpring = useSpring(cursorX, springConfig);
+  const cursorYSpring = useSpring(cursorY, springConfig);
+  const [cursorVariant, setCursorVariant] = useState("default");
+
+  useEffect(() => {
+    const mouseMove = (e: MouseEvent) => {
+      cursorX.set(e.clientX);
+      cursorY.set(e.clientY);
+    };
+    window.addEventListener("mousemove", mouseMove);
+    return () => window.removeEventListener("mousemove", mouseMove);
+  }, [cursorX, cursorY]);
+
+  const variants = {
+    default: {
+      x: "-50%", y: "-50%",
+      width: 16, height: 16,
+      backgroundColor: "#FFEA98",
+      opacity: 1,
+      mixBlendMode: "normal" as any,
+    },
+    hoverImage: {
+      x: "-50%", y: "-50%",
+      width: 80, height: 80,
+      backgroundColor: "rgba(255, 234, 152, 0.4)",
+      mixBlendMode: "screen" as any,
+    },
+    hoverText: {
+      x: "-50%", y: "-50%",
+      width: 80, height: 80,
+      backgroundColor: "rgba(255, 255, 255, 0.9)",
+      mixBlendMode: "difference" as any,
+    }
+  };
+
+  const cursorEnterImage = () => setCursorVariant("hoverImage");
+  const cursorEnterText = () => setCursorVariant("hoverText");
+  const cursorLeave = () => setCursorVariant("default");
+
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#f8f6f3", pb: 6, position: "relative" }}>
-      {/* Nút AI VNR - fixed */}
-      <Button
-        variant="contained"
-        startIcon={<SmartToy />}
-        onClick={() => navigate("/login")}
-        sx={{
-          position: "fixed",
-          top: 24,
-          right: 24,
-          zIndex: 1100,
-          px: 3,
-          py: 1.5,
-          borderRadius: 2,
-          textTransform: "none",
-          fontSize: "1rem",
-          fontWeight: 600,
-          background: "linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%)",
-          boxShadow: "0 4px 15px rgba(255, 107, 107, 0.4)",
-          "&:hover": {
-            background: "linear-gradient(135deg, #E85A5A 0%, #FFC93D 100%)",
-            boxShadow: "0 6px 20px rgba(255, 107, 107, 0.6)",
-          },
-        }}
+    <div className="min-h-screen bg-black text-white font-sans overflow-hidden selection:bg-[#FFEA98] selection:text-black cursor-none">
+
+      {/* FILM GRAIN OVERLAY */}
+      <div
+        className="pointer-events-none fixed inset-0 z-[100] w-full h-full opacity-10"
+        style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/1/16/Appearance_of_sky_for_weather_forecast%2C_Dhaka%2C_Bangladesh.JPG")', backgroundBlendMode: 'screen', filter: 'grayscale(1) contrast(1.5)' }}
+      ></div>
+
+      {/* DYNAMIC AMBIENT GLOW */}
+      <motion.div
+        animate={{ scale: [1, 1.3, 1], opacity: [0.15, 0.3, 0.15], x: [0, 150, -100, 0], y: [0, -100, 150, 0] }}
+        transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
+        className="fixed top-1/4 -left-32 w-[600px] h-[600px] bg-[#FFEA98] rounded-full blur-[180px] pointer-events-none z-0"
+      />
+      <motion.div
+        animate={{ scale: [1, 1.4, 1], opacity: [0.1, 0.2, 0.1], x: [0, -150, 100, 0], y: [0, 100, -150, 0] }}
+        transition={{ repeat: Infinity, duration: 25, ease: "linear", delay: 2 }}
+        className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-[#FF6B6B] rounded-full blur-[180px] pointer-events-none z-0"
+      />
+
+      {/* CUSTOM CURSOR */}
+      <motion.div
+        className="fixed top-0 left-0 bg-[#FFEA98] rounded-full pointer-events-none z-[9999] flex items-center justify-center text-black font-bold text-xs"
+        style={{ left: cursorXSpring, top: cursorYSpring }}
+        variants={variants}
+        animate={cursorVariant}
+        initial="default"
       >
-        AI VNR
-      </Button>
+        {cursorVariant === 'hoverImage' && <span className="opacity-100 uppercase tracking-widest text-[9px] -mt-px scale-75 animate-pulse">View</span>}
+      </motion.div>
 
-      {/* Layout: Sidebar trái | Nội dung | Sidebar phải */}
-      <Box
-        sx={{
-          display: "flex",
-          width: "100%",
-          maxWidth: 1600,
-          mx: "auto",
-          position: "relative",
-          zIndex: 2,
-        }}
-      >
-        {/* Sidebar trái - Mục lục Chương 4 (sticky + hiệu ứng trượt từ trái) */}
-        <Box
-          sx={{
-            display: { xs: "none", lg: "block" },
-            width: 300,
-            flexShrink: 0,
-            pl: 3,
-            pt: 6,
-            alignSelf: "flex-start",
-            position: "sticky",
-            top: 100,
-          }}
-        >
-          <ScrollRevealSection direction="left">
-          <Paper
-            elevation={4}
-            sx={{
-              p: 3.5,
-              borderRadius: 2.5,
-              bgcolor: "#fff",
-              border: "1px solid rgba(255,107,107,0.2)",
-            }}
-          >
-            <Typography variant="subtitle1" fontWeight={700} sx={{ color: "#FF6B6B", mb: 2, fontSize: "1rem" }}>
-              MỤC LỤC CHƯƠNG 4
-            </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              {["II. Nhà nước XHCN", "III. Dân chủ & Nhà nước pháp quyền", "1. Dân chủ XHCN ở VN", "2. Nhà nước pháp quyền XHCN", "3. Phát huy dân chủ hiện nay"].map((item, i) => (
-                <Typography key={i} variant="body2" sx={{ color: "text.secondary", fontSize: "0.95rem", lineHeight: 1.5 }}>
-                  • {item}
-                </Typography>
-              ))}
-            </Box>
-          </Paper>
-          </ScrollRevealSection>
-        </Box>
+      {/* NAVBAR */}
+      <header className="fixed top-0 inset-x-0 h-24 z-[60] flex items-center justify-between px-8 md:px-16 mix-blend-difference pb-8">
+        <a href="/" className="text-white text-xl md:text-2xl font-medium tracking-tighter cursor-none" onMouseEnter={cursorEnterText} onMouseLeave={cursorLeave}>
+          MLN131*
+        </a>
+        <nav className="hidden md:flex gap-8 text-[10px] tracking-[0.2em] font-medium text-white/70 uppercase pt-1 z-50">
+          <a onClick={() => document.getElementById("ii")?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white transition-colors cursor-pointer" onMouseEnter={cursorEnterText} onMouseLeave={cursorLeave}>Chương 4</a>
+        </nav>
+        <div className="flex items-center gap-6 pt-1">
+          <Magnetic onHover={cursorEnterImage} onLeave={cursorLeave}>
+            <button onClick={() => navigate("/login")} className="text-[10px] tracking-[0.2em] text-white/70 font-medium uppercase hover:text-white transition-colors cursor-none"></button>
+          </Magnetic>
+          <Magnetic onHover={cursorEnterImage} onLeave={cursorLeave}>
+            <button onClick={() => navigate("/login")} className="text-[10px] tracking-[0.2em] font-medium uppercase text-white hover:text-[#FFEA98] transition-colors cursor-none">
+              Trò chuyện cùng AI
+            </button>
+          </Magnetic>
+        </div>
+      </header>
 
-        {/* Nội dung chính */}
-        <Container maxWidth="lg" sx={{ py: 6, flex: 1, minWidth: 0, px: { xs: 2, sm: 3 } }}>
-        {/* Hero - Bìa sách */}
-        <Paper
-          elevation={8}
-          sx={{
-            p: { xs: 3, md: 4.5 },
-            mb: 6,
-            borderRadius: 3,
-            overflow: "hidden",
-            background: "linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%)",
-            backgroundSize: "200% 200%",
-            animation: `${gradientShift} 8s ease infinite, ${fadeIn} 0.8s ease-out`,
-            position: "relative",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: "linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 50%)",
-              pointerEvents: "none",
-            },
-          }}
-        >
-          <Box sx={{ textAlign: "center", position: "relative", zIndex: 1 }}>
-            <Box
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 80,
-                height: 80,
-                borderRadius: "50%",
-                bgcolor: "rgba(255,255,255,0.3)",
-                mb: 2,
-                animation: `${pulse} 2s ease-in-out infinite`,
-                "&:hover": { animation: `${rotate} 1s linear infinite` },
-              }}
-            >
-              <MenuBook sx={{ fontSize: 40, color: "#fff" }} />
-            </Box>
-            <Typography
-              variant="h4"
-              component="h1"
-              fontWeight={700}
-              sx={{
-                color: "#fff",
-                textShadow: "0 2px 4px rgba(0,0,0,0.2)",
-                mb: 1,
-              }}
-            >
-              Chương 4
-            </Typography>
-            <Typography
-              variant="h5"
-              fontWeight={600}
-              sx={{
-                color: "rgba(255,255,255,0.98)",
-                fontSize: { xs: "1.15rem", sm: "1.4rem" },
-              }}
-            >
-              Dân chủ xã hội chủ nghĩa và Nhà nước xã hội chủ nghĩa
-            </Typography>
-          </Box>
-        </Paper>
+      {/* HERO SECTION */}
+      <section ref={heroRef} className="relative h-screen bg-black">
+        {/* ✅ SỬA: justify-end + pb-0 để text nằm sát đáy, không bị cắt */}
+        <div className="h-screen w-full overflow-hidden flex flex-col justify-end pb-0 px-8 md:px-16 bg-black relative z-10">
 
-        {/* Các khối nội dung - xen kẽ, hiệu ứng scroll reveal */}
-        {sections.map((section) => (
-          <ScrollRevealSection key={section.id}>
-            <Paper
-              elevation={4}
-              sx={{
-                mb: 4,
-                borderRadius: 3,
-                overflow: "hidden",
-                display: "flex",
-                flexDirection: { xs: "column", md: section.imageLeft ? "row" : "row-reverse" },
-                transition: "transform 0.3s ease, box-shadow 0.3s ease",
-                "&:hover": {
-                  boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
-                  transform: "translateY(-4px)",
-                },
-              }}
-            >
-              {/* Ảnh */}
-              <Box
-                sx={{
-                  width: { xs: "100%", md: "45%" },
-                  minHeight: { xs: 260, md: 340 },
-                  flexShrink: 0,
-                }}
+          {/* Background Image */}
+          <div className="absolute inset-0 z-0">
+            <img src="/hero-bg-new.jpg" alt="Background" className="w-full h-full object-cover opacity-60 mix-blend-luminosity scale-110" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.85)_100%)]"></div>
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/80 to-transparent"></div>
+          </div>
+
+          {/* ✅ SỬA: Xóa hoàn toàn pt, dùng mb để tạo khoảng cách từ đáy */}
+          <div className="relative z-20 w-full flex flex-col mb-8">
+            <div className="w-full text-left overflow-hidden pt-4 pb-2">
+              <motion.h1
+                initial={{ y: "150%" }} animate={{ y: 0 }} transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                className="text-[12vw] leading-[1.1] font-normal tracking-tighter text-white"
+                onMouseEnter={cursorEnterText} onMouseLeave={cursorLeave}
               >
-              <Box
-                component="img"
-                src={section.image}
-                alt={section.title}
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  display: "block",
-                }}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "https://via.placeholder.com/600x400/f5f5f5/999?text=Hình+ảnh";
-                }}
-              />
-            </Box>
+                DÂN CHỦ
+              </motion.h1>
+            </div>
 
-            {/* Nội dung */}
-            <Box
-              sx={{
-                flex: 1,
-                p: { xs: 3, md: 4.5 },
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                bgcolor: "#fff",
-              }}
-            >
-              <Typography
-                variant="h6"
-                fontWeight={700}
-                sx={{
-                  mb: 2,
-                  background: "linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%)",
-                  backgroundClip: "text",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  fontSize: { xs: "1rem", sm: "1.15rem" },
-                }}
+            <div className="w-full text-center overflow-hidden pt-4 pb-2">
+              <motion.h1
+                initial={{ y: "150%" }} animate={{ y: 0 }} transition={{ duration: 1.2, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                className="text-[12vw] leading-[1.1] font-normal tracking-tighter text-white"
+                onMouseEnter={cursorEnterText} onMouseLeave={cursorLeave}
               >
-                {section.title}
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  color: "text.primary",
-                  lineHeight: 1.9,
-                  fontSize: { xs: "0.95rem", sm: "1rem" },
-                }}
-              >
-                {section.content}
-              </Typography>
-            </Box>
-          </Paper>
-          </ScrollRevealSection>
-        ))}
+                <span className="text-white/40 text-[4vw] uppercase tracking-[0.4em] font-medium align-middle mr-8 lg:mr-32">[ VÀ ]</span>
+                NHÀ NƯỚC
+              </motion.h1>
+            </div>
 
-        <Divider sx={{ my: 4 }}>
-          <Typography variant="body2" color="text.secondary">
-            hoặc
-          </Typography>
-        </Divider>
-
-        {/* CTA */}
-        <Paper
-          elevation={3}
-          sx={{
-            p: 4,
-            borderRadius: 3,
-            textAlign: "center",
-            background: "linear-gradient(135deg, rgba(255,107,107,0.08) 0%, rgba(255,217,61,0.08) 100%)",
-          }}
-        >
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Có nhu cầu trao đổi, hỏi đáp với AI?
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<SmartToy />}
-            onClick={() => navigate("/login")}
-            fullWidth
-            sx={{
-              py: 1.6,
-              borderRadius: 2,
-              textTransform: "none",
-              fontSize: "1rem",
-              fontWeight: 600,
-              maxWidth: 400,
-              mx: "auto",
-              display: "block",
-              background: "linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%)",
-              boxShadow: "0 4px 15px rgba(255, 107, 107, 0.4)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #E85A5A 0%, #FFC93D 100%)",
-                boxShadow: "0 6px 20px rgba(255, 107, 107, 0.6)",
-              },
-            }}
-          >
-            Đăng nhập để trải nghiệm AI VNR
-          </Button>
-          <Box textAlign="center" sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Chưa có tài khoản?{" "}
-              <Link
-                component={RouterLink}
-                to="/register"
-                underline="hover"
-                sx={{ color: "#FF6B6B", fontWeight: 600 }}
+            <div className="w-full text-right overflow-hidden pt-4 pb-2 flex items-end justify-between">
+              <motion.span
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 1 }}
+                className="hidden md:block text-[10px] tracking-[0.2em] font-medium text-white/50 uppercase mb-4 cursor-none"
+                onMouseEnter={cursorEnterText} onMouseLeave={cursorLeave}
               >
-                Đăng ký ngay
-              </Link>
-            </Typography>
-          </Box>
-        </Paper>
-        </Container>
-
-        {/* Sidebar phải - Quảng cáo AI VNR (sticky + hiệu ứng trượt từ phải) */}
-        <Box
-          sx={{
-            display: { xs: "none", lg: "block" },
-            width: 340,
-            flexShrink: 0,
-            pr: 3,
-            pt: 6,
-            alignSelf: "flex-start",
-            position: "sticky",
-            top: 100,
-          }}
-        >
-          <ScrollRevealSection direction="right">
-          <Paper
-            elevation={6}
-            sx={{
-              p: 4,
-              borderRadius: 3,
-              overflow: "hidden",
-              background: "linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%)",
-              border: "1px solid rgba(255,255,255,0.3)",
-            }}
-          >
-            <Box sx={{ textAlign: "center", mb: 2.5 }}>
-              <Box
-                sx={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 72,
-                  height: 72,
-                  borderRadius: "50%",
-                  bgcolor: "rgba(255,255,255,0.35)",
-                  mb: 2,
-                }}
+                [ SCROLL ]
+              </motion.span>
+              <motion.h1
+                initial={{ y: "150%" }} animate={{ y: 0 }} transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                className="text-[12vw] leading-[1.1] font-normal tracking-tighter text-[#FFEA98] drop-shadow-2xl"
+                onMouseEnter={cursorEnterText} onMouseLeave={cursorLeave}
               >
-                <SmartToy sx={{ fontSize: 36, color: "#fff" }} />
-              </Box>
-              <Typography variant="h6" fontWeight={700} sx={{ color: "#fff", fontSize: "1.5rem" }}>
-                AI VNR
-              </Typography>
-              <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.95)", mt: 0.5, fontSize: "1rem" }}>
-                Trợ lý AI hỏi đáp 24/7
-              </Typography>
-            </Box>
-            <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.9)", fontSize: "1rem", lineHeight: 1.7, mb: 2.5 }}>
-              Trao đổi, hỏi đáp về nội dung học tập với chatbot thông minh. Đăng nhập để trải nghiệm ngay.
-            </Typography>
-            <Button
-              variant="contained"
-              fullWidth
-              onClick={() => navigate("/login")}
-              startIcon={<SmartToy />}
-              sx={{
-                py: 1.5,
-                borderRadius: 2,
-                textTransform: "none",
-                fontWeight: 600,
-                fontSize: "1rem",
-                bgcolor: "#fff",
-                color: "#FF6B6B",
-                "&:hover": {
-                  bgcolor: "rgba(255,255,255,0.95)",
-                  color: "#E85A5A",
-                },
-              }}
-            >
-              Đăng nhập / Đăng ký
-            </Button>
-          </Paper>
-          </ScrollRevealSection>
-        </Box>
-      </Box>
-    </Box>
+                XHCN
+              </motion.h1>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* NỘI DUNG CHÍNH */}
+      <section className="relative z-30 pb-40 px-6 lg:px-12 border-t border-white/5 bg-black">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-16 lg:gap-24 relative">
+
+          {/* CỘT TRÁI */}
+          <aside className="lg:w-1/3 flex-shrink-0 relative">
+            <div className="lg:sticky lg:top-40 pt-10">
+              <p className="text-xs tracking-[0.3em] text-[#FFEA98] uppercase font-bold mb-10">Lộ trình chương</p>
+              <ul className="space-y-6 border-l border-white/10 pl-6">
+                {sections.map((section, idx) => (
+                  <motion.li
+                    key={section.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ delay: idx * 0.1, duration: 0.6 }}
+                  >
+                    <a
+                      onClick={() => document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth' })}
+                      className="text-lg lg:text-xl text-gray-500 hover:text-white transition-colors cursor-pointer group flex items-center gap-4"
+                      onMouseEnter={cursorEnterText}
+                      onMouseLeave={cursorLeave}
+                    >
+                      <span className="w-8 h-[1px] bg-white/20 group-hover:bg-[#FFEA98] transition-colors origin-left scale-0 group-hover:scale-100" />
+                      {section.title}
+                    </a>
+                  </motion.li>
+                ))}
+              </ul>
+
+              <div
+                className="mt-20 p-8 rounded-3xl bg-white/5 backdrop-blur-lg border border-white/10 relative overflow-hidden group cursor-none"
+                onMouseEnter={cursorEnterImage}
+                onMouseLeave={cursorLeave}
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFEA98] opacity-10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 group-hover:opacity-30 group-hover:scale-150 transition-all duration-700"></div>
+                <h4 className="text-[#FFEA98] font-medium text-2xl mb-4 relative z-10">Hỏi đáp bằng AI</h4>
+                <p className="text-gray-400 text-base leading-relaxed mb-8 relative z-10">
+                  Bạn có thắc mắc về nội dung bài học? Trợ lý AI MLN131 luôn sẵn sàng giải đáp 24/7.
+                </p>
+                <Magnetic onHover={cursorEnterImage} onLeave={cursorLeave}>
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="w-full py-4 px-6 bg-[#FFEA98]/10 border border-[#FFEA98]/30 hover:bg-[#FFEA98] text-[#FFEA98] hover:text-black rounded-xl font-bold uppercase tracking-widest text-sm transition-all duration-500 cursor-none relative z-10"
+                  >
+                    Đăng nhập ngay
+                  </button>
+                </Magnetic>
+              </div>
+            </div>
+          </aside>
+
+          {/* CỘT PHẢI */}
+          <main className="lg:w-2/3 flex flex-col gap-32 lg:pt-10">
+            {sections.map((section, index) => (
+              <motion.article
+                key={section.id}
+                id={section.id}
+                initial={{ opacity: 0, y: 80 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-150px" }}
+                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                className="group relative"
+                onMouseEnter={() => setHoveredId(section.id)}
+                onMouseLeave={() => setHoveredId(null)}
+              >
+                <div
+                  ref={(el) => { imageRefs.current[index] = el; }}
+                  onMouseEnter={cursorEnterImage}
+                  onMouseLeave={cursorLeave}
+                  className="relative overflow-hidden aspect-[16/10] mb-10 w-full bg-[#111] rounded-[2rem] cursor-none shadow-2xl"
+                >
+                  <img
+                    src={section.image}
+                    alt={section.title}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://images.unsplash.com/photo-1541888031549-01456942adbc?auto=format&fit=crop&q=80&w=2000";
+                    }}
+                    className={cn(
+                      "w-full h-full object-cover transition-transform duration-[2s] ease-[cubic-bezier(0.25,1,0.5,1)]",
+                      hoveredId === section.id ? "scale-105" : "scale-110"
+                    )}
+                  />
+                  <div
+                    className="absolute inset-0 bg-[#111] origin-top z-10"
+                    style={{
+                      transform: revealedImages.has(section.id) ? "scaleY(0)" : "scaleY(1)",
+                      transition: "transform 1.8s cubic-bezier(0.8, 0, 0.2, 1) 0.1s",
+                    }}
+                  />
+                </div>
+
+                <div className="pl-8 border-l border-white/10 group-hover:border-[#FFEA98] transition-colors duration-700 delay-100">
+                  <h3
+                    className="text-3xl lg:text-5xl font-medium mb-6 text-white group-hover:text-[#FFEA98] transition-colors duration-500 tracking-tight"
+                    onMouseEnter={cursorEnterText}
+                    onMouseLeave={cursorLeave}
+                  >
+                    {section.title}
+                  </h3>
+                  <p className="text-gray-400 text-xl leading-relaxed font-light mt-4">
+                    {section.content}
+                  </p>
+                </div>
+              </motion.article>
+            ))}
+
+            <div className="pt-24 mt-16 border-t border-white/10 flex justify-between text-sm text-gray-500 font-medium tracking-widest uppercase">
+              <span>© 2026 AI MLN131</span>
+              <a href="#" className="hover:text-white transition-colors cursor-none" onMouseEnter={cursorEnterText} onMouseLeave={cursorLeave}>
+                QUAY LẠI TRANG CHỦ
+              </a>
+            </div>
+          </main>
+
+        </div>
+      </section>
+    </div>
   );
 };
 

@@ -151,10 +151,10 @@ const ChatInterface: React.FC = () => {
                   </div>
                 </div>
                 <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-red-600 to-yellow-600 dark:from-red-400 dark:to-yellow-400 bg-clip-text text-transparent animate-slide-up">
-                  Chatbot VNR
+                  Chatbot MLN131
                 </h1>
                 <p className="text-xl text-gray-700 dark:text-gray-300 mb-8 animate-slide-up animation-delay-200">
-                  Bắt đầu cuộc trò chuyện với AI VNR
+                  Bắt đầu cuộc trò chuyện với AI MLN131
                 </p>
                 <button
                   onClick={handleNewChat}

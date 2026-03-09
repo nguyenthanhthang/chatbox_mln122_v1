@@ -10,7 +10,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
 
-  const roleLabel = isUser ? "Bạn" : isAssistant ? "AI VNR" : "System";
+  const roleLabel = isUser ? "Bạn" : isAssistant ? "AI MLN131" : "System";
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} animate-slide-in-message`}>
@@ -18,11 +18,10 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
         {/* Avatar */}
         <div className={`flex-shrink-0 ${isUser ? "ml-3" : "mr-3"}`}>
           <div
-            className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all group-hover:scale-110 ${
-              isUser
+            className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all group-hover:scale-110 ${isUser
                 ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white"
                 : "bg-gradient-to-br from-red-500 to-yellow-500 text-white"
-            }`}
+              }`}
           >
             <span className="text-xl">{isUser ? "👤" : "🤖"}</span>
           </div>
@@ -32,11 +31,10 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
         <div className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
           {/* Role label */}
           <div className={`flex items-center space-x-2 mb-2 ${isUser ? "flex-row-reverse space-x-reverse" : ""}`}>
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-              isUser
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isUser
                 ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
                 : "bg-gradient-to-r from-red-100 to-yellow-100 dark:from-red-900/30 dark:to-yellow-900/30 text-red-700 dark:text-red-300"
-            }`}>
+              }`}>
               {roleLabel}
             </span>
             <span className="text-xs text-gray-400 dark:text-gray-500">
@@ -45,16 +43,14 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
           </div>
 
           <div
-            className={`relative px-6 py-4 rounded-3xl shadow-lg transition-all group-hover:shadow-xl ${
-              isUser
+            className={`relative px-6 py-4 rounded-3xl shadow-lg transition-all group-hover:shadow-xl ${isUser
                 ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white"
                 : "bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-gray-800 dark:text-gray-100 border-2 border-gray-100 dark:border-gray-700"
-            }`}
+              }`}
           >
             {/* Decorative corner */}
-            <div className={`absolute ${isUser ? "right-0 top-0" : "left-0 top-0"} w-3 h-3 ${
-              isUser ? "bg-blue-600" : "bg-gradient-to-br from-red-500 to-yellow-500"
-            } rounded-full -translate-y-1 ${isUser ? "-translate-x-1" : "translate-x-1"}`}></div>
+            <div className={`absolute ${isUser ? "right-0 top-0" : "left-0 top-0"} w-3 h-3 ${isUser ? "bg-blue-600" : "bg-gradient-to-br from-red-500 to-yellow-500"
+              } rounded-full -translate-y-1 ${isUser ? "-translate-x-1" : "translate-x-1"}`}></div>
 
             {/* Images */}
             {message.images && message.images.length > 0 && (
@@ -63,8 +59,8 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
                   const src = image.url
                     ? image.url
                     : image.base64
-                    ? `data:${image.mimeType};base64,${image.base64}`
-                    : "";
+                      ? `data:${image.mimeType};base64,${image.base64}`
+                      : "";
                   return (
                     <img
                       key={index}
