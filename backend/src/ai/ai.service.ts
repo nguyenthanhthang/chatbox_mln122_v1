@@ -86,10 +86,15 @@ export class AIService {
       return (msg.content ?? '').trim().length > 0;
     });
 
-    const googleMessages: GoogleAIMessage[] = filtered.map((msg) => ({
+    let googleMessages: GoogleAIMessage[] = filtered.map((msg) => ({
       role: (msg.role === 'assistant' ? 'model' : 'user') as 'user' | 'model',
       parts: [{ text: msg.content }],
     }));
+
+    // Google API yêu cầu tin nhắn đầu tiên phải là 'user'
+    while (googleMessages.length > 0 && googleMessages[0].role === 'model') {
+      googleMessages = googleMessages.slice(1);
+    }
 
     if (googleMessages.length === 0) {
       throw new Error('Không có nội dung tin nhắn để gửi');
@@ -117,7 +122,7 @@ export class AIService {
       return (msg.content?.trim()?.length ?? 0) > 0 || (msg.images?.length ?? 0) > 0;
     });
 
-    const googleMessages: GoogleAIMessage[] = [];
+    let googleMessages: GoogleAIMessage[] = [];
 
     for (const msg of filtered) {
       const parts: any[] = [];
@@ -170,6 +175,11 @@ export class AIService {
           parts,
         });
       }
+    }
+
+    // Google API yêu cầu tin nhắn đầu tiên phải là 'user'
+    while (googleMessages.length > 0 && googleMessages[0].role === 'model') {
+      googleMessages = googleMessages.slice(1);
     }
 
     if (googleMessages.length === 0) {

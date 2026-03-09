@@ -9,6 +9,7 @@ interface MessageItemProps {
 const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
   const isUser = message.role === "user";
   const isAssistant = message.role === "assistant";
+  const isThinking = isAssistant && message.id?.startsWith("ai-pending-");
 
   const roleLabel = isUser ? "Bạn" : isAssistant ? "AI MLN131" : "System";
 
@@ -76,6 +77,15 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
             {/* Text content */}
             {isAssistant ? (
               <div className="prose prose-sm max-w-none">
+                {isThinking ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="flex space-x-1">
+                      <span className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-2 h-2 bg-yellow-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                ) : (
                 <ReactMarkdown
                   components={{
                     code: (props: any) => {
@@ -124,11 +134,15 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
                 >
                   {message.content}
                 </ReactMarkdown>
+                )}
               </div>
             ) : (
               <div className="whitespace-pre-wrap leading-relaxed">{message.content}</div>
             )}
           </div>
+          {isThinking && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">đang suy nghĩ</p>
+          )}
         </div>
       </div>
     </div>
