@@ -97,7 +97,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const [availableModels, setAvailableModels] = useState<any[]>([]);
 
   // Load sessions - defined first to avoid "used before defined" errors
-  const loadSessions = useCallback(async () => {
+  const loadSessions = useCallback(async (): Promise<ChatSession[]> => {
     try {
       setSessionsLoading(true);
       const response = await chatService.getSessions();
@@ -106,8 +106,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         id: s.id || s._id,
       }));
       setSessions(normalized);
+      return normalized;
     } catch (error: any) {
       toastError(getUserFriendlyErrorMessage(error));
+      return [];
     } finally {
       setSessionsLoading(false);
     }
@@ -268,16 +270,13 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           );
         });
 
-        // Update current session if it was created
-        if (response.userMessage && !currentSession) {
-          // This was a new session, load it
-          await loadSessions();
-          const newSession = sessions.find(
-            (s) => s.id === response.userMessage.sessionId
-          );
-          if (newSession) {
-            setCurrentSession(newSession);
-          }
+        // Refresh sessions để lấy title mới (auto-đổi từ tin nhắn đầu)
+        const refreshed = await loadSessions();
+        const updatedSession = refreshed.find(
+          (s) => s.id === (response.userMessage.sessionId || currentSession?.id)
+        );
+        if (updatedSession) {
+          setCurrentSession(updatedSession);
         }
       } catch (error: any) {
         console.error("Failed to send message:", error);

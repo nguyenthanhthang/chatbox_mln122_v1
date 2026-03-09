@@ -153,20 +153,26 @@ export class ChatService {
 
     await userMessage.save();
 
-    // Auto name session from first user message if still default
-    if (
-      session.messageCount === 0 &&
-      (session.title === 'New Chat' || !session.title)
-    ) {
+    // Auto name session từ vài chữ đầu tiên của tin nhắn đầu (nếu còn tên mặc định)
+    const isDefaultTitle = (t: string) => {
+      const lower = (t || '').toLowerCase().trim();
+      return (
+        !lower ||
+        lower === 'new chat' ||
+        lower === 'cuộc trò chuyện mới' ||
+        lower.startsWith('cuộc trò chuyện')
+      );
+    };
+    if (session.messageCount === 0 && isDefaultTitle(session.title)) {
       const raw = (sendMessageDto.message || '').trim();
       const hasImgs =
         Array.isArray(sendMessageDto.images) &&
         sendMessageDto.images.length > 0;
       const autoTitle = raw
-        ? raw.slice(0, 60)
+        ? raw.slice(0, 50).trim() + (raw.length > 50 ? '...' : '')
         : hasImgs
-          ? 'Image message'
-          : 'New Chat';
+          ? 'Tin nhắn có ảnh'
+          : 'Cuộc trò chuyện mới';
       await this.chatSessionModel.findByIdAndUpdate(sessionId, {
         title: autoTitle,
       });

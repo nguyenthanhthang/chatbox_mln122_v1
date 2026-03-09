@@ -200,10 +200,19 @@ const Sidebar: React.FC<SidebarProps> = ({
 
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{session.title}</p>
-                      <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        <span>{formatDate(session.lastMessageAt)}</span>
-                        <span>•</span>
-                        <span>{session.messageCount} tin nhắn</span>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-gray-100/80 dark:bg-gray-700/50 text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums">
+                          <svg className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {formatDate(session.lastMessageAt)}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-gray-100/80 dark:bg-gray-700/50 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                          <svg className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                          {session.messageCount} tin nhắn
+                        </span>
                       </div>
                     </div>
 
