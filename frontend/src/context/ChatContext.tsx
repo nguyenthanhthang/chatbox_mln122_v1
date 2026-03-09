@@ -2,9 +2,12 @@ import React, {
   createContext,
   useContext,
   useState,
+  useRef,
   ReactNode,
   useCallback,
+  useEffect,
 } from "react";
+import { useAuth } from "./AuthContext";
 import { chatService } from "../services/chat.service";
 import { toastError, toastSuccess } from "../utils/toast";
 import { getUserFriendlyErrorMessage } from "../utils/helpers";
@@ -84,6 +87,7 @@ interface ChatProviderProps {
 }
 
 export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
+  const { user } = useAuth();
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(
     null
   );
@@ -95,6 +99,24 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   const [aiSettings, setAISettings] = useState<AISettings | null>(null);
   const [availableModels, setAvailableModels] = useState<any[]>([]);
+
+  // Reset chat khi đăng xuất hoặc đổi tài khoản - tránh dùng session/tin nhắn của user cũ
+  const prevUserIdRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!user) {
+      setCurrentSession(null);
+      setMessages([]);
+      setSessions([]);
+      prevUserIdRef.current = undefined;
+    } else if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== user.id) {
+      setCurrentSession(null);
+      setMessages([]);
+      setSessions([]);
+      prevUserIdRef.current = user.id;
+    } else {
+      prevUserIdRef.current = user.id;
+    }
+  }, [user]);
 
   // Load sessions - defined first to avoid "used before defined" errors
   const loadSessions = useCallback(async (): Promise<ChatSession[]> => {

@@ -30,16 +30,16 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
 
         {/* Message Content */}
         <div className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
-          {/* Role label */}
-          <div className={`flex items-center space-x-2 mb-2 ${isUser ? "flex-row-reverse space-x-reverse" : ""}`}>
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isUser
+          {/* Role label + timestamp - cùng hàng, căn thẳng */}
+          <div className={`flex items-center gap-2 mb-2 min-h-[28px] ${isUser ? "flex-row-reverse" : "flex-row"}`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold shrink-0 ${isUser
                 ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
                 : "bg-gradient-to-r from-red-100 to-yellow-100 dark:from-red-900/30 dark:to-yellow-900/30 text-red-700 dark:text-red-300"
               }`}>
               {roleLabel}
             </span>
-            <span className="text-xs text-gray-400 dark:text-gray-500">
-              {new Date(message.timestamp).toLocaleTimeString()}
+            <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums whitespace-nowrap">
+              {new Date(message.timestamp).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false })}
             </span>
           </div>
 
