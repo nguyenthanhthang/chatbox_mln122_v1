@@ -300,11 +300,13 @@ export class ChatService {
     limit: number = 50,
   ): Promise<Message[]> {
     this.ensureValidObjectId(sessionId, 'sessionId');
-    return this.messageModel
+    // Lấy N tin nhắn MỚI NHẤT (sort -1 rồi reverse để giữ thứ tự thời gian)
+    const messages = await this.messageModel
       .find({ sessionId: new Types.ObjectId(sessionId) })
-      .sort({ timestamp: 1 })
+      .sort({ timestamp: -1 })
       .limit(limit)
       .exec();
+    return messages.reverse();
   }
 
   async clearSessionHistory(sessionId: string, userId: string): Promise<void> {

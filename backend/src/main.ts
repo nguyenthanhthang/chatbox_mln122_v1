@@ -16,8 +16,9 @@ async function bootstrap() {
     ? corsOrigin.split(',').map((origin: string) => origin.trim())
     : [corsOrigin];
   
-  // Also allow any Vercel preview URL (for development)
-  const isVercelPreview = (origin: string) => origin.includes('.vercel.app');
+  // Allow any *.vercel.app (preview + production)
+  const isVercelPreview = (origin: string) =>
+    origin?.includes('.vercel.app') || origin?.includes('vercel.app');
   
   // Allow localhost for local development (any port)
   const isLocalhost = (origin: string) => {
