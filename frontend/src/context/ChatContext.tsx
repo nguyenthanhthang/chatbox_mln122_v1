@@ -298,7 +298,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         setIsLoading(false);
       }
     },
-    [currentSession, sessions, loadSessions]
+    [currentSession, loadSessions]
   );
 
   // Clear current session
