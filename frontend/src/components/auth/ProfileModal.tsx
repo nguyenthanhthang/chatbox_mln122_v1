@@ -13,7 +13,6 @@ import {
   FiCamera as _FiCamera,
   FiInfo as _FiInfo,
   FiCheck as _FiCheck,
-  FiX as _FiX,
   FiLoader as _FiLoader,
 } from "react-icons/fi";
 
@@ -22,7 +21,6 @@ const FiMail = _FiMail as React.ElementType;
 const FiCamera = _FiCamera as React.ElementType;
 const FiInfo = _FiInfo as React.ElementType;
 const FiCheck = _FiCheck as React.ElementType;
-const FiX = _FiX as React.ElementType;
 const FiLoader = _FiLoader as React.ElementType;
 
 interface ProfileModalProps {
@@ -34,6 +32,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
   const { user, refreshUser } = useAuth();
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
+  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
+  const [dateOfBirth, setDateOfBirth] = useState(
+    user?.dateOfBirth ? user.dateOfBirth.slice(0, 10) : ""
+  );
+  const [gender, setGender] = useState(user?.gender || "");
   const [avatar, setAvatar] = useState(user?.avatar || "");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -44,6 +47,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
     if (user) {
       setFirstName(user.firstName || "");
       setLastName(user.lastName || "");
+      setPhoneNumber(user.phoneNumber || "");
+      setDateOfBirth(
+        user.dateOfBirth ? user.dateOfBirth.slice(0, 10) : ""
+      );
+      setGender(user.gender || "");
       setAvatar(user.avatar || "");
     }
   }, [user]);
@@ -55,6 +63,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
       if (avatar && /^https?:\/\//i.test(avatar)) {
         payload.avatar = avatar;
       }
+      if (phoneNumber.trim()) payload.phoneNumber = phoneNumber.trim();
+      if (dateOfBirth) payload.dateOfBirth = dateOfBirth;
+      if (gender.trim()) payload.gender = gender.trim();
       const res = await apiService.updateProfile(payload);
       setUser(res.data);
       // Refresh AuthContext to update user state
@@ -255,25 +266,43 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
             </p>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3 p-4 bg-gradient-to-r from-red-50 to-yellow-50 rounded-2xl border-2 border-red-100 animate-slide-up animation-delay-300">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-yellow-600">
-                {user?.email?.length || 0}
-              </div>
-              <div className="text-xs text-gray-600 mt-1">Email chars</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-2 animate-slide-up">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Số điện thoại
+              </label>
+              <Input
+                value={phoneNumber}
+                onChange={(e: any) => setPhoneNumber(e.target.value)}
+                placeholder="VD: 0912345678"
+                className="w-full rounded-xl border-2 border-gray-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all"
+              />
             </div>
-            <div className="text-center border-l border-r border-red-200">
-              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-yellow-600">
-                {(firstName + lastName).length}
-              </div>
-              <div className="text-xs text-gray-600 mt-1">Name chars</div>
+            <div className="space-y-2 animate-slide-up">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Năm sinh
+              </label>
+              <Input
+                type="date"
+                value={dateOfBirth}
+                onChange={(e: any) => setDateOfBirth(e.target.value)}
+                className="w-full rounded-xl border-2 border-gray-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all"
+              />
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-yellow-600">
-                {avatar ? <FiCheck /> : <FiX />}
-              </div>
-              <div className="text-xs text-gray-600 mt-1">Avatar</div>
+            <div className="space-y-2 animate-slide-up">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Giới tính
+              </label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="w-full rounded-xl border-2 border-gray-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all px-4 py-2.5 bg-white"
+              >
+                <option value="">Chọn giới tính</option>
+                <option value="male">Nam</option>
+                <option value="female">Nữ</option>
+                <option value="other">Khác</option>
+              </select>
             </div>
           </div>
         </div>

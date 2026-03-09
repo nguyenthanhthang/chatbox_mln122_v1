@@ -23,6 +23,15 @@ export class User {
   @Prop()
   backgroundUrl?: string;
 
+  @Prop()
+  phoneNumber?: string;
+
+  @Prop()
+  dateOfBirth?: Date;
+
+  @Prop()
+  gender?: string;
+
   @Prop({ default: true })
   isActive: boolean;
 

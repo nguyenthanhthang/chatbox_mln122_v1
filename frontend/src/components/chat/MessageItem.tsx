@@ -129,22 +129,6 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
               <div className="whitespace-pre-wrap leading-relaxed">{message.content}</div>
             )}
           </div>
-
-          {/* Message Info */}
-          <div className={`text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center space-x-3 ${isUser ? "flex-row-reverse space-x-reverse" : ""}`}>
-            {message.tokens && (
-              <span className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                <span>⚡</span>
-                <span>{message.tokens} tokens</span>
-              </span>
-            )}
-            {message.model && (
-              <span className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                <span>🤖</span>
-                <span>{message.model}</span>
-              </span>
-            )}
-          </div>
         </div>
       </div>
     </div>

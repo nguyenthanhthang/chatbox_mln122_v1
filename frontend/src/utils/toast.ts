@@ -7,14 +7,18 @@ const defaultOptions: ToastOptions = {
   closeOnClick: true,
   pauseOnHover: true,
   draggable: true,
-  theme: "light",
+  theme: "colored",
 };
 
 export const toastSuccess = (message: string, options?: ToastOptions) =>
   toast.success(message, { ...defaultOptions, ...options });
 
 export const toastError = (message: string, options?: ToastOptions) =>
-  toast.error(message, { ...defaultOptions, ...options });
+  toast.error(message, {
+    ...defaultOptions,
+    autoClose: 6000,
+    ...options,
+  });
 
 export const toastInfo = (message: string, options?: ToastOptions) =>
   toast.info(message, { ...defaultOptions, ...options });

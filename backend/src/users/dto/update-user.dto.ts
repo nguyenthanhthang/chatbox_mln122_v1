@@ -20,6 +20,14 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   phoneNumber?: string;
 
   @IsOptional()
+  @IsDateString()
+  dateOfBirth?: string;
+
+  @IsOptional()
+  @IsString()
+  gender?: string;
+
+  @IsOptional()
   emailVerificationToken?: string | null;
 
   @IsOptional()

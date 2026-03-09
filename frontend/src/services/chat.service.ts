@@ -99,11 +99,13 @@ class ChatService {
     return response.data;
   }
 
-  // Messages
+  // Messages (timeout 60s vì AI có thể mất 15-60s để trả lời)
   async sendMessage(
     data: SendMessageRequest
   ): Promise<{ userMessage: Message; aiMessage: Message }> {
-    const response = await apiService.post("/chat/send", data);
+    const response = await apiService.post("/chat/send", data, {
+      timeout: 60000,
+    });
     return response.data;
   }
 

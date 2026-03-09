@@ -34,7 +34,13 @@ root.render(
   <React.StrictMode>
     <>
       <App />
-      <ToastContainer position="top-right" autoClose={5000} theme="light" />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        theme="colored"
+        newestOnTop
+        limit={3}
+      />
     </>
   </React.StrictMode>
 );

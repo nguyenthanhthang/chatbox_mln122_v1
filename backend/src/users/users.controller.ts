@@ -30,8 +30,10 @@ export class UsersController {
   }
 
   @Get('profile')
-  getProfile(@CurrentUser() user: any) {
-    return this.usersService.findById(user._id);
+  async getProfile(@CurrentUser() user: any) {
+    const profile = await this.usersService.findById(user._id);
+    const p = profile.toObject ? profile.toObject() : profile;
+    return { ...p, id: p._id || p.id };
   }
 
   @Get(':id')

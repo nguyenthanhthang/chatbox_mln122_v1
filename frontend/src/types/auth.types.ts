@@ -9,6 +9,8 @@ export interface User {
   emailVerification: VerificationStatus;
   phoneVerification: VerificationStatus;
   phoneNumber?: string;
+  dateOfBirth?: string;
+  gender?: string;
   isActive: boolean;
   lastLoginAt?: string;
   createdAt: string;

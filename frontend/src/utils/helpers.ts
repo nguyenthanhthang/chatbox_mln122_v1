@@ -97,3 +97,39 @@ export const isValidPhoneNumber = (phone: string): boolean => {
   const phoneRegex = /^(\+84|84|0)[1-9][0-9]{8,9}$/;
   return phoneRegex.test(phone.replace(/\s/g, ""));
 };
+
+/**
+ * Chuyển lỗi kỹ thuật thành thông báo thân thiện cho người dùng
+ */
+export const getUserFriendlyErrorMessage = (error: any): string => {
+  const msg = error?.message || "";
+  const code = error?.code;
+
+  if (code === "ECONNABORTED" || msg.includes("timeout") || msg.includes("exceeded")) {
+    return "Máy chủ phản hồi quá chậm. Vui lòng thử lại sau.";
+  }
+  if (code === "ERR_NETWORK" || !error?.response) {
+    return "Không thể kết nối. Kiểm tra mạng và thử lại.";
+  }
+  if (error?.response?.status === 503) {
+    return "Máy chủ đang bận. Vui lòng thử lại sau vài phút.";
+  }
+  if (error?.response?.status === 429) {
+    return "Bạn đã gửi quá nhiều yêu cầu. Vui lòng đợi một chút.";
+  }
+  if (error?.response?.status >= 500) {
+    return "Lỗi máy chủ. Vui lòng thử lại sau.";
+  }
+
+  // Nếu server trả về message rõ ràng thì dùng
+  const data = error?.response?.data;
+  if (data) {
+    if (typeof data === "string") return data;
+    if (data.message) {
+      return Array.isArray(data.message) ? data.message.join("; ") : data.message;
+    }
+    if (data.error) return data.error;
+  }
+
+  return msg || "Đã xảy ra lỗi. Vui lòng thử lại.";
+};

@@ -1,5 +1,6 @@
 import React, { useState, useRef, KeyboardEvent } from "react";
 import { toastError, toastWarn, toastSuccess } from "../../utils/toast";
+import { getUserFriendlyErrorMessage } from "../../utils/helpers";
 import {
   compressImage,
   createImagePreview,
@@ -38,7 +39,8 @@ const InputBox: React.FC<InputBoxProps> = ({
   }, [autoFocus]);
 
   const handleSubmit = async () => {
-    if ((!message.trim() && images.length === 0) || disabled) return;
+    if ((!message.trim() && images.length === 0) || disabled || isUploading)
+      return;
 
     const messageToSend = message.trim();
     const imagesToSend = [...images];
@@ -224,18 +226,7 @@ const InputBox: React.FC<InputBoxProps> = ({
             prev.filter((img) => img.tempId !== currentIndex)
           );
 
-          // Check if rate limited
-          if (uploadError?.response?.status === 429) {
-            toastError(
-              "Quá nhiều upload trong thời gian ngắn. Vui lòng đợi một chút."
-            );
-          } else {
-            const errorMessage =
-              uploadError?.response?.data?.message ||
-              uploadError?.message ||
-              "Lỗi khi tải ảnh lên";
-            toastError(errorMessage);
-          }
+          toastError(getUserFriendlyErrorMessage(uploadError));
           return null;
         }
       });
@@ -243,11 +234,7 @@ const InputBox: React.FC<InputBoxProps> = ({
       // Wait for all uploads to complete
       await Promise.all(uploadPromises);
     } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Lỗi khi tải ảnh lên";
-      toastError(errorMessage);
+      toastError(getUserFriendlyErrorMessage(error));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -358,7 +345,9 @@ const InputBox: React.FC<InputBoxProps> = ({
 
           <button
             onClick={handleSubmit}
-            disabled={(!message.trim() && images.length === 0) || disabled}
+            disabled={
+              (!message.trim() && images.length === 0) || disabled || isUploading
+            }
             className="flex-shrink-0 p-3 rounded-2xl bg-gradient-to-r from-red-500 to-yellow-500 text-white hover:from-red-600 hover:to-yellow-600 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl hover:scale-110 group relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>

@@ -98,7 +98,7 @@ class ApiService {
   }
 
   async getProfile() {
-    return this.api.get("/auth/profile");
+    return this.api.get("/users/profile");
   }
 
   // User endpoints
@@ -126,7 +126,7 @@ class ApiService {
     return this.api.delete(`/users/${id}`);
   }
 
-  // Chat endpoints
+  // Chat endpoints (timeout 60s vì AI có thể mất 15-60s để trả lời)
   async sendMessage(messageData: {
     chatId: string;
     content: string;
@@ -135,7 +135,7 @@ class ApiService {
     attachmentName?: string;
     attachmentSize?: number;
   }) {
-    return this.api.post("/chat/send", messageData);
+    return this.api.post("/chat/send", messageData, { timeout: 60000 });
   }
 
   // Generic methods

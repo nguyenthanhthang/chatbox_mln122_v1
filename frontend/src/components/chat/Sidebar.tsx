@@ -118,7 +118,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 { k: "all", label: "Tất cả", icon: "📚" },
                 { k: "today", label: "Hôm nay", icon: "📅" },
                 { k: "week", label: "Tuần", icon: "📆" },
-                { k: "starred", label: "Yêu thích", icon: "⭐" },
+                // { k: "starred", label: "Yêu thích", icon: "⭐" }, // Tạm ẩn
               ] as const).map((f) => (
                 <button
                   key={f.k}

@@ -6,7 +6,6 @@ import MessageList from "./MessageList";
 import InputBox from "./InputBox";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { toastError } from "../../utils/toast";
 
 const ChatInterface: React.FC = () => {
   const { user, logout } = useAuth();
@@ -41,9 +40,8 @@ const ChatInterface: React.FC = () => {
       await createNewSession();
       setFocusInput(true);
       setSidebarOpen(false);
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Không thể tạo cuộc trò chuyện mới";
-      toastError(errorMessage);
+    } catch {
+      // Lỗi đã được hiển thị trong ChatContext
     }
   };
 
@@ -51,18 +49,16 @@ const ChatInterface: React.FC = () => {
     try {
       await loadSession(sessionId);
       setSidebarOpen(false);
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Không thể tải cuộc trò chuyện";
-      toastError(errorMessage);
+    } catch {
+      // Lỗi đã được hiển thị trong ChatContext
     }
   };
 
   const handleDeleteSession = async (sessionId: string) => {
     try {
       await deleteSession(sessionId);
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Không thể xóa cuộc trò chuyện";
-      toastError(errorMessage);
+    } catch {
+      // Lỗi đã được hiển thị trong ChatContext
     }
   };
 
@@ -90,9 +86,8 @@ const ChatInterface: React.FC = () => {
         .filter(Boolean);
 
       await sendMessage(content, undefined, imageData);
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Không thể gửi tin nhắn";
-      toastError(errorMessage);
+    } catch {
+      // Lỗi đã được hiển thị trong ChatContext (toast + message inline)
     }
   };
 
@@ -100,9 +95,8 @@ const ChatInterface: React.FC = () => {
     if (!currentSession) return;
     try {
       await clearCurrentSession();
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Không thể xóa lịch sử";
-      toastError(errorMessage);
+    } catch {
+      // Lỗi đã được hiển thị trong ChatContext
     }
   };
 

@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { chatService } from "../services/chat.service";
 import { toastError, toastSuccess } from "../utils/toast";
+import { getUserFriendlyErrorMessage } from "../utils/helpers";
 import { ImageMetadata } from "../types/image.types";
 
 export interface Message {
@@ -106,11 +107,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       }));
       setSessions(normalized);
     } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Không thể tải danh sách cuộc trò chuyện";
-      toastError(errorMessage);
+      toastError(getUserFriendlyErrorMessage(error));
     } finally {
       setSessionsLoading(false);
     }
@@ -137,11 +134,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         await loadSessions(); // Refresh sessions list
         toastSuccess("Tạo cuộc trò chuyện mới thành công");
       } catch (error: any) {
-        const errorMessage =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Không thể tạo cuộc trò chuyện mới";
-        toastError(errorMessage);
+        toastError(getUserFriendlyErrorMessage(error));
         throw error;
       } finally {
         setIsLoading(false);
@@ -173,11 +166,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       setCurrentSession(normalized);
       setMessages(normalizedMessages);
     } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Không thể tải cuộc trò chuyện";
-      toastError(errorMessage);
+      toastError(getUserFriendlyErrorMessage(error));
       throw error;
     } finally {
       setIsLoading(false);
@@ -199,11 +188,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           await createNewSession();
         }
       } catch (error: any) {
-        const errorMessage =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Không thể xóa cuộc trò chuyện";
-        toastError(errorMessage);
+        toastError(getUserFriendlyErrorMessage(error));
         throw error;
       }
     },
@@ -296,25 +281,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         }
       } catch (error: any) {
         console.error("Failed to send message:", error);
-        console.error("Error response:", error?.response?.data);
-
-        // Extract detailed error message
-        let errorMessage = "Có lỗi khi gửi tin nhắn";
-        if (error?.response?.data) {
-          const data = error.response.data;
-          if (typeof data === "string") {
-            errorMessage = data;
-          } else if (data.message) {
-            errorMessage = Array.isArray(data.message)
-              ? data.message.join("; ")
-              : data.message;
-          } else if (data.error) {
-            errorMessage = data.error;
-          }
-        } else if (error?.message) {
-          errorMessage = error.message;
-        }
-
+        const errorMessage = getUserFriendlyErrorMessage(error);
         toastError(errorMessage);
         setMessages((prev) =>
           prev.map((m) =>
@@ -322,8 +289,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
               ? {
                   ...m,
                   id: `ai-${Date.now()}`,
-                  content:
-                    "Xin lỗi, có lỗi khi tạo phản hồi. Vui lòng thử lại sau.",
+                  content: `Xin lỗi, ${errorMessage}`,
                 }
               : m
           )
@@ -345,11 +311,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       setMessages([]);
       toastSuccess("Đã xóa lịch sử cuộc trò chuyện");
     } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Không thể xóa lịch sử";
-      toastError(errorMessage);
+      toastError(getUserFriendlyErrorMessage(error));
       throw error;
     }
   }, [currentSession]);
@@ -363,11 +325,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       await loadSessions();
       toastSuccess("Đã xóa toàn bộ lịch sử");
     } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Không thể xóa lịch sử";
-      toastError(errorMessage);
+      toastError(getUserFriendlyErrorMessage(error));
       throw error;
     }
   }, [loadSessions]);
@@ -380,11 +338,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         setAISettings(updatedSettings);
         toastSuccess("Cập nhật cài đặt AI thành công");
       } catch (error: any) {
-        const errorMessage =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Không thể cập nhật cài đặt AI";
-        toastError(errorMessage);
+        toastError(getUserFriendlyErrorMessage(error));
         throw error;
       }
     },
