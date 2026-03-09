@@ -8,7 +8,7 @@ import {
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 interface InputProps extends Omit<TextFieldProps, "type"> {
-  type?: "text" | "email" | "password" | "number" | "tel";
+  type?: "text" | "email" | "password" | "number" | "tel" | "date";
   showPasswordToggle?: boolean;
 }
 
