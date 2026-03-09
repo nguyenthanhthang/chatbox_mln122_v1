@@ -161,7 +161,7 @@ const ChatInterface: React.FC = () => {
               </div>
             </div>
           ) : messages.length === 0 && currentSession ? (
-            // Lời chào chuyên nghiệp cho phiên chat mới (ẩn đi sau khi có tin nhắn đầu tiên)
+            // Lời chào cho phiên chat mới (ẩn sau tin nhắn đầu)
             <div className="flex items-center justify-center h-full animate-fade-in">
               <div className="relative max-w-3xl w-full">
                 <div className="absolute -inset-1 bg-gradient-to-r from-red-500 via-orange-400 to-yellow-400 opacity-60 blur-2xl rounded-3xl animate-pulse" />

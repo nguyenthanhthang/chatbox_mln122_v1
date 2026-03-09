@@ -270,7 +270,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
           );
         });
 
-        // Refresh sessions để lấy title mới (auto-đổi từ tin nhắn đầu)
+        // Refresh sessions để lấy title mới (auto từ tin nhắn đầu)
         const refreshed = await loadSessions();
         const updatedSession = refreshed.find(
           (s) => s.id === (response.userMessage.sessionId || currentSession?.id)

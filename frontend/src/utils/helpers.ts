@@ -71,7 +71,9 @@ export const formatFileSize = (bytes: number): string => {
 };
 
 /** Lấy tên hiển thị của user (firstName, username, email prefix, hoặc "bạn") */
-export const getDisplayName = (user: { firstName?: string; lastName?: string; username?: string; email?: string } | null): string => {
+export const getDisplayName = (
+  user: { firstName?: string; lastName?: string; username?: string; email?: string } | null
+): string => {
   if (!user) return "bạn";
   const first = (user.firstName || "").trim();
   const last = (user.lastName || "").trim();
