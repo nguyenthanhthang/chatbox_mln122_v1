@@ -51,7 +51,7 @@ interface ChatContextType {
   // Sessions
   sessions: ChatSession[];
   sessionsLoading: boolean;
-  loadSessions: () => Promise<void>;
+  loadSessions: () => Promise<ChatSession[]>;
 
   // AI Settings
   aiSettings: AISettings | null;

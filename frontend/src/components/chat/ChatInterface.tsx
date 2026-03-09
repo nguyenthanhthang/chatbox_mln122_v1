@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useChat } from "../../context/ChatContext";
 import { useAuth } from "../../context/AuthContext";
+import { getDisplayName } from "../../utils/helpers";
 import { ImageMetadata } from "../../types/image.types";
 import MessageList from "./MessageList";
 import InputBox from "./InputBox";
@@ -136,6 +137,7 @@ const ChatInterface: React.FC = () => {
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto px-4 py-6">
           {messages.length === 0 && !currentSession ? (
+            // Màn hình landing khi chưa có phiên chat nào
             <div className="flex items-center justify-center h-full animate-fade-in">
               <div className="text-center max-w-2xl px-4">
                 <div className="w-32 h-32 mx-auto mb-6 relative">
@@ -156,6 +158,37 @@ const ChatInterface: React.FC = () => {
                 >
                   Bắt đầu trò chuyện
                 </button>
+              </div>
+            </div>
+          ) : messages.length === 0 && currentSession ? (
+            // Lời chào chuyên nghiệp cho phiên chat mới (ẩn đi sau khi có tin nhắn đầu tiên)
+            <div className="flex items-center justify-center h-full animate-fade-in">
+              <div className="relative max-w-3xl w-full">
+                <div className="absolute -inset-1 bg-gradient-to-r from-red-500 via-orange-400 to-yellow-400 opacity-60 blur-2xl rounded-3xl animate-pulse" />
+                <div className="relative bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-3xl px-8 py-10 shadow-2xl border border-white/60 dark:border-gray-700">
+                  <div className="flex items-center justify-center mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-yellow-500 flex items-center justify-center shadow-lg animate-bounce">
+                      <span className="text-3xl">🤖</span>
+                    </div>
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-semibold text-center mb-3 text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 animate-slide-up">
+                    Tôi có thể giúp được gì, {getDisplayName(user)}?
+                  </h2>
+                  <p className="text-center text-gray-600 dark:text-gray-300 mb-6 animate-slide-up animation-delay-200">
+                    Hãy nhập câu hỏi đầu tiên của bạn ở bên dưới. Tôi có thể hỗ trợ bạn tóm tắt tài liệu, giải thích khái niệm, gợi ý ý tưởng, hoặc cùng bạn debug code.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2 text-sm animate-slide-up animation-delay-400">
+                    <span className="px-3 py-1 rounded-full bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-200 border border-red-100 dark:border-red-800">
+                      Gợi ý 📚: “Tóm tắt giúp mình tài liệu này…”
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-200 border border-yellow-100 dark:border-yellow-800">
+                      Hỏi đáp 💡: “Giải thích đơn giản cho mình…”
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-200 border border-orange-100 dark:border-orange-800">
+                      Lập trình 🧑‍💻: “Giúp mình sửa lỗi này…”
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (

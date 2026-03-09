@@ -70,6 +70,20 @@ export const formatFileSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 
+/** Lấy tên hiển thị của user (firstName, username, email prefix, hoặc "bạn") */
+export const getDisplayName = (user: { firstName?: string; lastName?: string; username?: string; email?: string } | null): string => {
+  if (!user) return "bạn";
+  const first = (user.firstName || "").trim();
+  const last = (user.lastName || "").trim();
+  if (first || last) return [first, last].filter(Boolean).join(" ");
+  if (user.username?.trim()) return user.username.trim();
+  if (user.email) {
+    const prefix = user.email.split("@")[0];
+    if (prefix) return prefix;
+  }
+  return "bạn";
+};
+
 export const generateAvatarUrl = (username: string): string => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(
     username
