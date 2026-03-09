@@ -194,15 +194,6 @@ const ChatInterface: React.FC = () => {
           ) : (
             <div className="max-w-4xl mx-auto">
               <MessageList messages={messages} />
-              {isLoading && (
-                <div className="flex justify-center py-8 animate-fade-in">
-                  <div className="flex items-center space-x-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg">
-                    <div className="w-3 h-3 bg-gradient-to-r from-red-500 to-yellow-500 rounded-full animate-bounce"></div>
-                    <div className="w-3 h-3 bg-gradient-to-r from-red-500 to-yellow-500 rounded-full animate-bounce animation-delay-200"></div>
-                    <div className="w-3 h-3 bg-gradient-to-r from-red-500 to-yellow-500 rounded-full animate-bounce animation-delay-400"></div>
-                  </div>
-                </div>
-              )}
               <div ref={messagesEndRef} />
             </div>
           )}
