@@ -12,7 +12,6 @@ import {
   ListItemButton,
 } from "@mui/material";
 import { useChat } from "../../hooks/useChat";
-import { useAuth } from "../../hooks/useAuth";
 import { LoadingSpinner } from "../../components/common";
 import { formatDate } from "../../utils/helpers";
 

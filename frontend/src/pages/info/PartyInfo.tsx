@@ -1,7 +1,17 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, useScroll, useMotionValue, useSpring } from "framer-motion";
+import { motion, useScroll, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import Lenis from "lenis";
+import {
+  ShieldCheck,
+  Brain,
+  Code2,
+  Palette,
+  Wrench,
+  Database,
+  CheckCircle2,
+  X,
+} from "lucide-react";
 
 function cn(...classes: (string | undefined | null | false)[]) {
   return classes.filter(Boolean).join(" ");
@@ -199,6 +209,7 @@ const PartyInfo: React.FC = () => {
 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [revealedImages, setRevealedImages] = useState<Set<string>>(new Set());
+  const [showAiUsageModal, setShowAiUsageModal] = useState(false);
   const imageRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
@@ -359,8 +370,21 @@ const PartyInfo: React.FC = () => {
           </Magnetic>
           <Magnetic onHover={cursorEnterImage} onLeave={cursorLeave}>
             <button
+              type="button"
+              onClick={() => setShowAiUsageModal(true)}
+              className="text-[10px] tracking-[0.2em] text-white/70 font-medium uppercase hover:text-white transition-colors cursor-none"
+              onMouseEnter={cursorEnterText}
+              onMouseLeave={cursorLeave}
+            >
+              AI USAGE
+            </button>
+          </Magnetic>
+          <Magnetic onHover={cursorEnterImage} onLeave={cursorLeave}>
+            <button
               onClick={() => navigate("/login")}
               className="text-[10px] tracking-[0.2em] font-medium uppercase text-white hover:text-[#FFEA98] transition-colors cursor-none"
+              onMouseEnter={cursorEnterText}
+              onMouseLeave={cursorLeave}
             >
               Trò chuyện cùng AI
             </button>
@@ -583,6 +607,270 @@ const PartyInfo: React.FC = () => {
           </main>
         </div>
       </section>
+
+      {/* AI USAGE MODAL */}
+      <AnimatePresence>
+        {showAiUsageModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-8"
+            onClick={() => setShowAiUsageModal(false)}
+          >
+            <div
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              aria-hidden
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-[#1a2328] border border-white/10 shadow-2xl cursor-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/10 bg-[#1a2328]">
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="w-8 h-8 text-[#5dd4c4]" />
+                  <h2 className="text-2xl font-bold text-[#FFEA98]">
+                    Cam kết liêm chính học thuật
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAiUsageModal(false)}
+                  className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  onMouseEnter={cursorEnterText}
+                  onMouseLeave={cursorLeave}
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 md:p-8 space-y-8">
+                {/* Section 1 */}
+                <section>
+                  <h3 className="text-lg font-bold text-[#FFEA98] mb-3 px-3 py-1 bg-[#FFEA98]/10 rounded inline-block">
+                    1. Nguồn tài liệu và giáo trình
+                  </h3>
+                  <p className="text-gray-300 mb-4">
+                    Tất cả nội dung trong sản phẩm này được xây dựng dựa trên:
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 text-gray-300 pl-4">
+                    <li>Giáo trình chính thức môn MLN131 Chủ nghĩa xã hội khoa học</li>
+                    <li>Các tác phẩm, tài liệu về Chủ nghĩa xã hội khoa học</li>
+                    <li>Tài liệu học thuật được công nhận và sử dụng trong giảng dạy</li>
+                    <li>Các nghiên cứu khoa học về Chủ nghĩa xã hội khoa học</li>
+                  </ul>
+                </section>
+
+                {/* Section 2 */}
+                <section>
+                  <h3 className="text-lg font-bold text-[#5dd4c4] mb-3 px-3 py-1 bg-[#5dd4c4]/10 rounded inline-block">
+                    2. Nguyên tắc trình bày nội dung
+                  </h3>
+                  <p className="text-gray-300 mb-4">Chúng tôi cam kết:</p>
+                  <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                    <ul className="list-disc list-inside space-y-2 text-gray-300 pl-4">
+                      <li>Trình bày chính xác, trung thực các quan điểm, nội dung của môn Chủ nghĩa xã hội khoa học</li>
+                      <li>Không tự ý thêm bớt, thay đổi nội dung so với giáo trình và tài liệu gốc</li>
+                      <li>Giữ nguyên tính chính xác về mặt học thuật và lịch sử</li>
+                      <li>Tôn trọng nguyên văn các trích dẫn và khái niệm</li>
+                    </ul>
+                  </div>
+                </section>
+
+                {/* Section 3 */}
+                <section>
+                  <h3 className="text-lg font-bold text-[#FFEA98] mb-3 px-3 py-1 bg-[#FFEA98]/10 rounded inline-block">
+                    3. Mục đích sử dụng
+                  </h3>
+                  <p className="text-gray-300 mb-4">
+                    Chủ nghĩa xã hội khoa học là một trong ba bộ phận của chủ nghĩa Marx-Lenin, dựa trên
+                    phương pháp luận duy vật biện chứng và duy vật lịch sử để luận giải về quá trình cách mạng
+                    xã hội chủ nghĩa, hình thái kinh tế - xã hội cộng sản chủ nghĩa, gắn với sứ mệnh lịch sử
+                    của giai cấp công nhân.
+                  </p>
+                  <p className="text-gray-300 mb-4">
+                    Sản phẩm hỗ trợ sinh viên đạt các mục tiêu môn học MLN131:
+                  </p>
+                  <ul className="list-disc list-inside space-y-2 text-gray-300 pl-4">
+                    <li>
+                      <strong className="text-white">Kiến thức:</strong> Nắm vững tri thức cơ bản, cốt lõi
+                      về Chủ nghĩa xã hội khoa học.
+                    </li>
+                    <li>
+                      <strong className="text-white">Kỹ năng:</strong> Vận dụng tri thức để xem xét, đánh giá
+                      các vấn đề chính trị - xã hội liên quan đến CNXH và con đường đi lên CNXH ở Việt Nam.
+                    </li>
+                    <li>
+                      <strong className="text-white">Thái độ:</strong> Hình thành thái độ chính trị, tư tưởng
+                      đúng đắn; phát triển tư duy phản biện, năng lực lý luận và ứng dụng thực tiễn; nhấn mạnh
+                      vai trò công dân và tinh thần trách nhiệm xã hội.
+                    </li>
+                  </ul>
+                  <p className="text-gray-300 mt-4 px-3 py-2 bg-[#FFEA98]/10 rounded">
+                    Nội dung sản phẩm bám sát giáo trình chính thức, phục vụ mục đích học tập và ôn tập hiệu quả.
+                  </p>
+                </section>
+
+                {/* AI Tools Card */}
+                <section className="rounded-xl border border-white/10 bg-[#243035] p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Brain className="w-8 h-8 text-[#FFEA98]" />
+                    <h3 className="text-xl font-bold text-white">
+                      Công cụ AI được sử dụng
+                    </h3>
+                  </div>
+
+                  <div className="space-y-8">
+                    {/* 1. Cursor AI */}
+                    <div>
+                      <h4 className="font-bold text-[#FFEA98] mb-2">
+                        1. Cursor AI (Claude Sonnet 4.5)
+                      </h4>
+                      <p className="text-sm font-medium text-gray-300 mb-2">Mục đích sử dụng:</p>
+                      <ul className="list-disc list-inside space-y-1 text-gray-400 text-sm pl-4 mb-2">
+                        <li>Hỗ trợ viết code và phát triển giao diện người dùng</li>
+                        <li>Tạo cấu trúc HTML/CSS/JavaScript cho website</li>
+                        <li>Tối ưu hóa trải nghiệm người dùng (UX/UI)</li>
+                        <li>Xử lý logic tương tác và điều hướng trang</li>
+                      </ul>
+                      <p className="text-xs text-[#5dd4c4] italic">
+                        Lưu ý: AI chỉ hỗ trợ về mặt kỹ thuật, không can thiệp vào nội dung học thuật.
+                      </p>
+                    </div>
+
+                    {/* 2. AI Chatbot */}
+                    <div>
+                      <h4 className="font-bold text-[#FFEA98] mb-2">
+                        2. AI Chatbot (Knowledge Base)
+                      </h4>
+                      <p className="text-sm font-medium text-gray-300 mb-2">Mục đích sử dụng:</p>
+                      <ul className="list-disc list-inside space-y-1 text-gray-400 text-sm pl-4 mb-2">
+                        <li>Trả lời câu hỏi của người học về nội dung bài học</li>
+                        <li>Hỗ trợ tìm kiếm thông tin trong phạm vi giáo trình</li>
+                        <li>Tạo trải nghiệm học tập tương tác</li>
+                        <li>Giải thích các khái niệm và thuật ngữ</li>
+                      </ul>
+                      <p className="text-xs text-[#5dd4c4] italic">
+                        Lưu ý: Chatbot chỉ trả lời dựa trên knowledge base được xây dựng từ giáo trình
+                        chính thức, không tự tạo nội dung mới.
+                      </p>
+                    </div>
+
+                    {/* 3. Các công cụ hỗ trợ khác */}
+                    <div>
+                      <h4 className="font-bold text-[#FFEA98] mb-4">
+                        3. Các công cụ hỗ trợ khác
+                      </h4>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="flex gap-3 p-4 rounded-lg bg-white/5 border border-white/5">
+                          <Code2 className="w-6 h-6 text-[#FFEA98] flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium text-white">React & TypeScript</p>
+                            <p className="text-sm text-gray-400">
+                              Framework và ngôn ngữ lập trình để xây dựng giao diện web hiện đại.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 p-4 rounded-lg bg-white/5 border border-white/5">
+                          <Palette className="w-6 h-6 text-[#FFEA98] flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium text-white">Tailwind CSS</p>
+                            <p className="text-sm text-gray-400">
+                              Công cụ styling để tạo giao diện đẹp và responsive.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 p-4 rounded-lg bg-white/5 border border-white/5">
+                          <Wrench className="w-6 h-6 text-[#FFEA98] flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium text-white">Vite</p>
+                            <p className="text-sm text-gray-400">
+                              Build tool để phát triển và tối ưu hóa ứng dụng web.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 p-4 rounded-lg bg-white/5 border border-white/5">
+                          <Database className="w-6 h-6 text-[#FFEA98] flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium text-white">Local Storage</p>
+                            <p className="text-sm text-gray-400">
+                              Lưu trữ dữ liệu người dùng (tiến độ học tập, kết quả quiz) trên trình duyệt.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Quy trình đảm bảo chất lượng */}
+                <section>
+                  <div className="flex items-center gap-3 mb-6">
+                    <CheckCircle2 className="w-8 h-8 text-[#5dd4c4]" />
+                    <h3 className="text-xl font-bold text-white">
+                      Quy trình đảm bảo chất lượng
+                    </h3>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                      <span className="flex-shrink-0 w-10 h-10 rounded-full bg-[#FFEA98]/20 text-[#FFEA98] font-bold flex items-center justify-center">
+                        1
+                      </span>
+                      <div>
+                        <p className="font-medium text-white mb-1">Kiểm tra nguồn tài liệu</p>
+                        <p className="text-sm text-gray-400">
+                          Tất cả nội dung được đối chiếu với giáo trình chính thức trước khi đưa vào sản phẩm.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                      <span className="flex-shrink-0 w-10 h-10 rounded-full bg-[#FFEA98]/20 text-[#FFEA98] font-bold flex items-center justify-center">
+                        2
+                      </span>
+                      <div>
+                        <p className="font-medium text-white mb-1">Rà soát nội dung</p>
+                        <p className="text-sm text-gray-400">
+                          Nội dung được kiểm tra kỹ lưỡng để đảm bảo tính chính xác và phù hợp với giáo trình.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                      <span className="flex-shrink-0 w-10 h-10 rounded-full bg-[#FFEA98]/20 text-[#FFEA98] font-bold flex items-center justify-center">
+                        3
+                      </span>
+                      <div>
+                        <p className="font-medium text-white mb-1">Giới hạn phạm vi AI</p>
+                        <p className="text-sm text-gray-400">
+                          AI chỉ được sử dụng cho phần kỹ thuật (code, UI), không tham gia vào việc tạo hoặc
+                          chỉnh sửa nội dung học thuật.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                      <span className="flex-shrink-0 w-10 h-10 rounded-full bg-[#FFEA98]/20 text-[#FFEA98] font-bold flex items-center justify-center">
+                        4
+                      </span>
+                      <div>
+                        <p className="font-medium text-white mb-1">Cam kết minh bạch</p>
+                        <p className="text-sm text-gray-400">
+                          Chúng tôi công khai về việc sử dụng AI và cam kết tính liêm chính học thuật trong
+                          toàn bộ sản phẩm.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

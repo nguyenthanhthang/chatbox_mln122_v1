@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { Chat, Search, Settings, Person, Add } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
 
 interface SidebarProps {
   open: boolean;
@@ -24,7 +23,6 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
 
   const menuItems = [
     { text: "Chats", icon: <Chat />, path: "/chat" },
