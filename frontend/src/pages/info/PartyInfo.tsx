@@ -619,19 +619,24 @@ const PartyInfo: React.FC = () => {
             onClick={() => setShowAiUsageModal(false)}
           >
             <div
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm cursor-none"
               aria-hidden
+              onMouseEnter={cursorLeave}
             />
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-[#1a2328] border border-white/10 shadow-2xl cursor-auto"
+              className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-[#1a2328] border border-white/10 shadow-2xl cursor-none"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
-              <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/10 bg-[#1a2328]">
+              <div
+                className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/10 bg-[#1a2328]"
+                onMouseEnter={cursorEnterText}
+                onMouseLeave={cursorLeave}
+              >
                 <div className="flex items-center gap-3">
                   <ShieldCheck className="w-8 h-8 text-[#5dd4c4]" />
                   <h2 className="text-2xl font-bold text-[#FFEA98]">
@@ -652,7 +657,10 @@ const PartyInfo: React.FC = () => {
               {/* Modal Content */}
               <div className="p-6 md:p-8 space-y-8">
                 {/* Section 1 */}
-                <section>
+                <section
+                  onMouseEnter={cursorEnterText}
+                  onMouseLeave={cursorLeave}
+                >
                   <h3 className="text-lg font-bold text-[#FFEA98] mb-3 px-3 py-1 bg-[#FFEA98]/10 rounded inline-block">
                     1. Nguồn tài liệu và giáo trình
                   </h3>
@@ -668,7 +676,10 @@ const PartyInfo: React.FC = () => {
                 </section>
 
                 {/* Section 2 */}
-                <section>
+                <section
+                  onMouseEnter={cursorEnterText}
+                  onMouseLeave={cursorLeave}
+                >
                   <h3 className="text-lg font-bold text-[#5dd4c4] mb-3 px-3 py-1 bg-[#5dd4c4]/10 rounded inline-block">
                     2. Nguyên tắc trình bày nội dung
                   </h3>
@@ -684,7 +695,10 @@ const PartyInfo: React.FC = () => {
                 </section>
 
                 {/* Section 3 */}
-                <section>
+                <section
+                  onMouseEnter={cursorEnterText}
+                  onMouseLeave={cursorLeave}
+                >
                   <h3 className="text-lg font-bold text-[#FFEA98] mb-3 px-3 py-1 bg-[#FFEA98]/10 rounded inline-block">
                     3. Mục đích sử dụng
                   </h3>
@@ -718,7 +732,11 @@ const PartyInfo: React.FC = () => {
                 </section>
 
                 {/* AI Tools Card */}
-                <section className="rounded-xl border border-white/10 bg-[#243035] p-6">
+                <section
+                  className="rounded-xl border border-white/10 bg-[#243035] p-6"
+                  onMouseEnter={cursorEnterImage}
+                  onMouseLeave={cursorLeave}
+                >
                   <div className="flex items-center gap-3 mb-6">
                     <Brain className="w-8 h-8 text-[#FFEA98]" />
                     <h3 className="text-xl font-bold text-white">
@@ -810,7 +828,10 @@ const PartyInfo: React.FC = () => {
                 </section>
 
                 {/* Quy trình đảm bảo chất lượng */}
-                <section>
+                <section
+                  onMouseEnter={cursorEnterImage}
+                  onMouseLeave={cursorLeave}
+                >
                   <div className="flex items-center gap-3 mb-6">
                     <CheckCircle2 className="w-8 h-8 text-[#5dd4c4]" />
                     <h3 className="text-xl font-bold text-white">
@@ -818,10 +839,10 @@ const PartyInfo: React.FC = () => {
                     </h3>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
-                      <span className="flex-shrink-0 w-10 h-10 rounded-full bg-[#FFEA98]/20 text-[#FFEA98] font-bold flex items-center justify-center">
-                        1
-                      </span>
+<div className="flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                          <span className="flex-shrink-0 w-10 h-10 rounded-full bg-[#FFEA98]/20 text-[#FFEA98] font-bold flex items-center justify-center">
+                            1
+                          </span>
                       <div>
                         <p className="font-medium text-white mb-1">Kiểm tra nguồn tài liệu</p>
                         <p className="text-sm text-gray-400">
